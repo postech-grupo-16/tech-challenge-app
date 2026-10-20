@@ -1,0 +1,63 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/estoque/itens",
+    "headers": {
+      "Authorization": {
+        "matches": "Bearer .*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "nome": "Óleo Motor 5W-30",
+        "descricao": "Óleo sintético para motor 1.0 a 2.0",
+        "precoVenda": 85.50,
+        "precoCompra": 42.00,
+        "quantidadePorUnidade": "Lata 1L",
+        "quantidadeEstoque": 25,
+        "quantidadeMinima": 10,
+        "abaixoDoMinimo": false
+      },
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440001",
+        "nome": "Filtro de Ar",
+        "descricao": "Filtro de ar compatível com vários modelos",
+        "precoVenda": 35.00,
+        "precoCompra": 15.00,
+        "quantidadePorUnidade": "Unidade",
+        "quantidadeEstoque": 5,
+        "quantidadeMinima": 10,
+        "abaixoDoMinimo": true
+      },
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440002",
+        "nome": "Vela de Ignição",
+        "descricao": "Vela de ignição jogo c/4",
+        "precoVenda": 120.00,
+        "precoCompra": 60.00,
+        "quantidadePorUnidade": "Jogo c/4",
+        "quantidadeEstoque": 15,
+        "quantidadeMinima": 5,
+        "abaixoDoMinimo": false
+      },
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440003",
+        "nome": "Correia de Distribuição",
+        "descricao": "Correia de distribuição para motor 1.6",
+        "precoVenda": 250.00,
+        "precoCompra": 120.00,
+        "quantidadePorUnidade": "Unidade",
+        "quantidadeEstoque": 3,
+        "quantidadeMinima": 5,
+        "abaixoDoMinimo": true
+      }
+    ]
+  }
+}

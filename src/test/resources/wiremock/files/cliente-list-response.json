@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "nome": "João Silva Santos",
+    "cpfCnpj": "12345678901",
+    "email": "joao.silva@example.com",
+    "telefone": "(11) 98765-4321",
+    "dataCriacao": "2026-01-15T10:30:00",
+    "veiculos": [
+      {
+        "id": 1,
+        "placa": "ABC1234",
+        "modelo": "Honda Civic 2.0",
+        "ano": 2020,
+        "clienteId": 1
+      },
+      {
+        "id": 2,
+        "placa": "XYZ5678",
+        "modelo": "Honda Fit",
+        "ano": 2019,
+        "clienteId": 1
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "nome": "Maria Santos Costa",
+    "cpfCnpj": "98765432100",
+    "email": "maria.santos@example.com",
+    "telefone": "(11) 91234-5678",
+    "dataCriacao": "2026-02-20T14:45:00",
+    "veiculos": [
+      {
+        "id": 3,
+        "placa": "DEF9876",
+        "modelo": "Ford Focus",
+        "ano": 2021,
+        "clienteId": 2
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "nome": "Pedro Oliveira Souza",
+    "cpfCnpj": "11122233344",
+    "email": "pedro.oliveira@example.com",
+    "telefone": "(11) 99876-5432",
+    "dataCriacao": "2026-03-10T09:15:00",
+    "veiculos": []
+  }
+]

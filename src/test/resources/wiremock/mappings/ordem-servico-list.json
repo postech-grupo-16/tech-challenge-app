@@ -1,0 +1,59 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/atendimento/ordens",
+    "headers": {
+      "Authorization": {
+        "matches": "Bearer .*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": [
+      {
+        "id": 202401001,
+        "clienteId": 1,
+        "clienteNome": "João Silva",
+        "veiculoId": 1,
+        "veiculoModelo": "Honda Civic",
+        "veiculoPlaca": "ABC1234",
+        "mecanicoId": "a1b2c3d4-e5f6-4a5b-6c7d-8e9f0a1b2c3d",
+        "mecanicoNome": "Carlos Mecânico",
+        "status": "RECEBIDA",
+        "valorTotal": 0.00,
+        "valorTotalAcumulado": 0.00,
+        "urgente": false,
+        "dataInicioExecucao": null,
+        "dataFinalizacao": null,
+        "queixaCliente": "Problema no motor",
+        "observacoes": "Carro faz barulho estranho",
+        "orcamentos": [],
+        "historicoStatus": []
+      },
+      {
+        "id": 202401002,
+        "clienteId": 2,
+        "clienteNome": "Maria Santos",
+        "veiculoId": 2,
+        "veiculoModelo": "Ford Focus",
+        "veiculoPlaca": "XYZ9876",
+        "mecanicoId": "b2c3d4e5-f6a7-5b6c-7d8e-9f0a1b2c3d4e",
+        "mecanicoNome": "Pedro Mecânico",
+        "status": "EM_EXECUCAO",
+        "valorTotal": 500.00,
+        "valorTotalAcumulado": 500.00,
+        "urgente": true,
+        "dataInicioExecucao": "2026-06-24T08:00:00",
+        "dataFinalizacao": null,
+        "queixaCliente": "Freio com problema",
+        "observacoes": "Inspect com urgência",
+        "orcamentos": [],
+        "historicoStatus": []
+      }
+    ]
+  }
+}

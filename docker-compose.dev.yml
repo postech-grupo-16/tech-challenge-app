@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  # PostgreSQL - Banco de Dados
+  postgres:
+    image: postgres:16-alpine
+    container_name: tech-challenge-db
+    environment:
+      POSTGRES_DB: tech_challenge
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MailHog - SMTP Mock para E-mails
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: tech-challenge-mailhog
+    ports:
+      - "1025:1025"    # SMTP
+      - "8025:8025"    # Web UI
+    environment:
+      MH_SMTP_BIND_ADDR: "0.0.0.0:1025"
+      MH_UI_WEB_PATH: ""
+      MH_API_BIND_ADDR: "0.0.0.0:8025"
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: tech-challenge-network
+    driver: bridge

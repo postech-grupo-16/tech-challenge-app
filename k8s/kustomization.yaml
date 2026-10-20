@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: tech-challenge
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: tech-challenge
+      app.kubernetes.io/managed-by: kustomize
+    includeSelectors: false
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - app-service.yaml
+  - app-deployment.yaml
+  - app-ingress.yaml
+  - app-hpa.yaml
+  - app-pdb.yaml

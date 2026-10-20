@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPattern": "/api/atendimento/ordens/buscar\\?id=999999",
+    "headers": {
+      "Authorization": {
+        "matches": "Bearer .*"
+      }
+    }
+  },
+  "response": {
+    "status": 404,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "erro": "Ordem de serviço não encontrada: 999999",
+      "timestamp": "{{now format='yyyy-MM-dd'T'HH:mm:ss'}}"
+    }
+  }
+}

@@ -1,0 +1,592 @@
+{
+  "info": {
+    "name": "Atendimento (Oficina) - Tech Challenge",
+    "description": "Fluxo completo do atendimento: catalogo de servicos + ciclo de vida da OS do recebimento a entrega.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",    "value": "http://localhost:8080" },
+    { "key": "token",      "value": "" },
+    { "key": "mecanicoId", "value": "22222222-2222-4222-8222-222222222221" },
+    { "key": "clienteId",  "value": "44444444-4444-4444-8444-444444444441" },
+    { "key": "veiculoId",  "value": "55555555-5555-4555-8555-555555555551" },
+    { "key": "pecaId",     "value": "66666666-6666-4666-8666-666666666661" },
+    { "key": "servicoId",  "value": "77777777-7777-4777-8777-777777777771" },
+    { "key": "osId",       "value": "" },
+    { "key": "osPecaId",   "value": "" },
+    { "key": "osServicoId","value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Login (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('token', json.accessToken);",
+                  "  pm.test('Token salvo', () => pm.expect(json.accessToken).to.be.a('string'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@oficina.local\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] }
+          }
+        },
+        {
+          "name": "Login (mecanico)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('token', json.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"marcos.lima@oficina.local\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Catalogo de Servicos",
+      "item": [
+        {
+          "name": "Listar servicos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/atendimento/servicos", "host": ["{{baseUrl}}"], "path": ["atendimento","servicos"] }
+          }
+        },
+        {
+          "name": "Buscar servico por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/servicos/{{servicoId}}",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","servicos","{{servicoId}}"]
+            }
+          }
+        },
+        {
+          "name": "Criar servico no catalogo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "var json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('servicoId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Alinhamento e Balanceamento\",\n  \"descricao\": \"Alinhamento das rodas dianteiras e traseiras com balanceamento dinamico.\",\n  \"precoMaoDeObra\": 180.00\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/atendimento/servicos", "host": ["{{baseUrl}}"], "path": ["atendimento","servicos"] }
+          }
+        },
+        {
+          "name": "Atualizar servico",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Alinhamento e Balanceamento Premium\",\n  \"descricao\": \"Alinhamento completo com balanceamento dinamico e estatico.\",\n  \"precoMaoDeObra\": 220.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/servicos/{{servicoId}}",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","servicos","{{servicoId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Ordens de Servico",
+      "item": [
+        {
+          "name": "Criar OS (sem mecanico)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Status RECEBIDA', () => pm.expect(pm.response.json().status).to.eql('RECEBIDA'));",
+                  "var json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('osId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteId}}\",\n  \"veiculoId\": \"{{veiculoId}}\",\n  \"mecanicoId\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/atendimento/ordens", "host": ["{{baseUrl}}"], "path": ["atendimento","ordens"] }
+          }
+        },
+        {
+          "name": "Criar OS (com mecanico)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "var json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('osId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteId}}\",\n  \"veiculoId\": \"{{veiculoId}}\",\n  \"mecanicoId\": \"{{mecanicoId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/atendimento/ordens", "host": ["{{baseUrl}}"], "path": ["atendimento","ordens"] }
+          }
+        },
+        {
+          "name": "Listar todas as OS",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/atendimento/ordens", "host": ["{{baseUrl}}"], "path": ["atendimento","ordens"] }
+          }
+        },
+        {
+          "name": "Listar OS por status",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens?status=RECEBIDA",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens"],
+              "query": [{ "key": "status", "value": "RECEBIDA" }]
+            }
+          }
+        },
+        {
+          "name": "Buscar OS por ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Atribuir Mecanico",
+      "item": [
+        {
+          "name": "Atribuir mecanico a OS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Mecanico atribuido', () => pm.expect(pm.response.json().mecanicoId).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mecanicoId\": \"{{mecanicoId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}/mecanico",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}","mecanico"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Pecas e Servicos da OS",
+      "item": [
+        {
+          "name": "Adicionar peca a OS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.pecas && json.pecas.length > 0) {",
+                  "  pm.collectionVariables.set('osPecaId', json.pecas[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pecaId\": \"{{pecaId}}\",\n  \"quantidade\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}/pecas",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}","pecas"]
+            }
+          }
+        },
+        {
+          "name": "Remover peca da OS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Peca removida', () => pm.expect(pm.response.json().pecas).to.have.lengthOf(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}/pecas/{{osPecaId}}",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}","pecas","{{osPecaId}}"]
+            }
+          }
+        },
+        {
+          "name": "Adicionar servico a OS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.servicos && json.servicos.length > 0) {",
+                  "  pm.collectionVariables.set('osServicoId', json.servicos[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"servicoId\": \"{{servicoId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}/servicos",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}","servicos"]
+            }
+          }
+        },
+        {
+          "name": "Remover servico da OS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Servico removido', () => pm.expect(pm.response.json().servicos).to.have.lengthOf(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}/servicos/{{osServicoId}}",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}","servicos","{{osServicoId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Avanco de Status (RECEBIDA → ENTREGUE)",
+      "description": "Execute cada request em sequencia para percorrer o ciclo completo: RECEBIDA > EM_DIAGNOSTICO > AGUARDANDO_APROVACAO > EM_EXECUCAO > FINALIZADA > ENTREGUE",
+      "item": [
+        {
+          "name": "Avancar: RECEBIDA → EM_DIAGNOSTICO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('EM_DIAGNOSTICO', () => pm.expect(pm.response.json().status).to.eql('EM_DIAGNOSTICO'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}/status/avancar",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}","status","avancar"]
+            }
+          }
+        },
+        {
+          "name": "Avancar: EM_DIAGNOSTICO → AGUARDANDO_APROVACAO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('AGUARDANDO_APROVACAO', () => pm.expect(pm.response.json().status).to.eql('AGUARDANDO_APROVACAO'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}/status/avancar",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}","status","avancar"]
+            }
+          }
+        },
+        {
+          "name": "Avancar: AGUARDANDO_APROVACAO → EM_EXECUCAO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('EM_EXECUCAO', () => pm.expect(pm.response.json().status).to.eql('EM_EXECUCAO'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}/status/avancar",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}","status","avancar"]
+            }
+          }
+        },
+        {
+          "name": "Avancar: EM_EXECUCAO → FINALIZADA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('FINALIZADA', () => pm.expect(pm.response.json().status).to.eql('FINALIZADA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}/status/avancar",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}","status","avancar"]
+            }
+          }
+        },
+        {
+          "name": "Avancar: FINALIZADA → ENTREGUE",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('ENTREGUE', () => pm.expect(pm.response.json().status).to.eql('ENTREGUE'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}/status/avancar",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}","status","avancar"]
+            }
+          }
+        },
+        {
+          "name": "Tentar avancar OS ENTREGUE (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 ao tentar avancar apos ENTREGUE', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/{{osId}}/status/avancar",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","{{osId}}","status","avancar"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Erros Esperados",
+      "item": [
+        {
+          "name": "Criar OS com cliente inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 cliente nao encontrado', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"00000000-0000-0000-0000-000000000000\",\n  \"veiculoId\": \"{{veiculoId}}\",\n  \"mecanicoId\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/atendimento/ordens", "host": ["{{baseUrl}}"], "path": ["atendimento","ordens"] }
+          }
+        },
+        {
+          "name": "Buscar OS inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 OS nao encontrada', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/atendimento/ordens/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"], "path": ["atendimento","ordens","00000000-0000-0000-0000-000000000000"]
+            }
+          }
+        },
+        {
+          "name": "Sem autenticacao (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 sem token', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/atendimento/ordens", "host": ["{{baseUrl}}"], "path": ["atendimento","ordens"] }
+          }
+        }
+      ]
+    }
+  ]
+}

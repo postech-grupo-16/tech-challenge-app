@@ -1,0 +1,213 @@
+{
+  "info": {
+    "name": "Acompanhamento (Cliente) - Tech Challenge",
+    "description": "Fluxo do cliente: login e consulta do status das suas ordens de servico.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",   "value": "http://localhost:8080" },
+    { "key": "token",     "value": "" },
+    { "key": "clienteId", "value": "44444444-4444-4444-8444-444444444441" },
+    { "key": "osId",      "value": "88888888-8888-4888-8888-888888888882" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Login (cliente - Ana Paula)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('token', json.accessToken);",
+                  "  pm.test('Token salvo', () => pm.expect(json.accessToken).to.be.a('string'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana.ribeiro@cliente.local\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] }
+          }
+        },
+        {
+          "name": "Login (cliente - Ricardo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('token', json.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ricardo.costa@cliente.local\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Consultar Ordens de Servico",
+      "item": [
+        {
+          "name": "Listar minhas OS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "var json = pm.response.json();",
+                  "pm.test('Cada OS tem status e descricaoStatus', () => {",
+                  "  json.forEach(os => {",
+                  "    pm.expect(os.status).to.be.a('string');",
+                  "    pm.expect(os.descricaoStatus).to.be.a('string');",
+                  "  });",
+                  "});",
+                  "if (json.length > 0) {",
+                  "  pm.collectionVariables.set('osId', json[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{clienteId}}/ordens",
+              "host": ["{{baseUrl}}"], "path": ["clientes","{{clienteId}}","ordens"]
+            }
+          }
+        },
+        {
+          "name": "Detalhar OS especifica",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Tem id', () => pm.expect(json.id).to.be.a('string'));",
+                  "pm.test('Tem status e descricao', () => {",
+                  "  pm.expect(json.status).to.be.a('string');",
+                  "  pm.expect(json.descricaoStatus).to.be.a('string');",
+                  "});",
+                  "pm.test('Tem veiculo', () => {",
+                  "  pm.expect(json.veiculoPlaca).to.be.a('string');",
+                  "  pm.expect(json.veiculoModelo).to.be.a('string');",
+                  "});",
+                  "pm.test('Tem listas de servicos e pecas', () => {",
+                  "  pm.expect(json.servicos).to.be.an('array');",
+                  "  pm.expect(json.pecas).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{clienteId}}/ordens/{{osId}}",
+              "host": ["{{baseUrl}}"], "path": ["clientes","{{clienteId}}","ordens","{{osId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Erros Esperados",
+      "item": [
+        {
+          "name": "Sem autenticacao (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 sem token', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{clienteId}}/ordens",
+              "host": ["{{baseUrl}}"], "path": ["clientes","{{clienteId}}","ordens"]
+            }
+          }
+        },
+        {
+          "name": "OS de outro cliente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 OS nao pertence ao cliente', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{clienteId}}/ordens/88888888-8888-4888-8888-888888888884",
+              "host": ["{{baseUrl}}"], "path": ["clientes","{{clienteId}}","ordens","88888888-8888-4888-8888-888888888884"]
+            }
+          }
+        },
+        {
+          "name": "OS inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 OS nao encontrada', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{clienteId}}/ordens/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"], "path": ["clientes","{{clienteId}}","ordens","00000000-0000-0000-0000-000000000000"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

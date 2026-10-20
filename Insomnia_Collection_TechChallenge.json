@@ -1,0 +1,569 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-06-21T20:00:00.000Z",
+  "__export_source": "insomnia.desktop:v2024.1.0",
+  "resources": [
+    {
+      "_id": "wrk_tech_challenge",
+      "_type": "workspace",
+      "name": "Tech Challenge - Oficina Mecânica",
+      "description": "API de Gestão de Ordens de Serviço - Oficina Mecânica",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_tech_challenge",
+      "name": "Local Development",
+      "data": {
+        "base_url": "http://localhost:8080"
+      }
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_tech_challenge",
+      "name": "🔐 Autenticação"
+    },
+    {
+      "_id": "req_login_admin",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "1. Login - Admin",
+      "method": "POST",
+      "url": "{{ base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@1234\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_login_mecanico",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "2. Login - Mecânico",
+      "method": "POST",
+      "url": "{{ base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"mecanico@oficina.com\",\n  \"password\": \"Func@1234\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_me",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "3. Verificar Dados do Usuário Autenticado",
+      "method": "GET",
+      "url": "{{ base_url }}/me",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "fld_ordem_servico",
+      "_type": "request_group",
+      "parentId": "wrk_tech_challenge",
+      "name": "📋 Ordem de Serviço"
+    },
+    {
+      "_id": "req_criar_os",
+      "_type": "request",
+      "parentId": "fld_ordem_servico",
+      "name": "1. Criar Nova OS (CPF/CNPJ e Placa)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/ordens-servico",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"cpfCnpjCliente\": \"52998224725\",\n  \"placaVeiculo\": \"ABC1234\",\n  \"queixaCliente\": \"Barulho anormal ao frear\",\n  \"observacoes\": \"Veículo com risco na lateral esquerda\",\n  \"urgente\": false\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_listar_os",
+      "_type": "request",
+      "parentId": "fld_ordem_servico",
+      "name": "2. Listar Todas as OS",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/ordens-servico",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_buscar_os",
+      "_type": "request",
+      "parentId": "fld_ordem_servico",
+      "name": "3. Buscar OS por ID",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/ordens-servico/88888888-8888-4888-8888-888888888881",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_atualizar_os",
+      "_type": "request",
+      "parentId": "fld_ordem_servico",
+      "name": "4. Atualizar OS",
+      "method": "PUT",
+      "url": "{{ base_url }}/api/v1/ordens-servico/88888888-8888-4888-8888-888888888881",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"clienteId\": \"88888888-8888-4888-8888-888888888880\",\n  \"veiculoId\": \"66666666-6666-4666-8666-666666666660\",\n  \"mecanicoId\": null,\n  \"status\": \"EM_DIAGNOSTICO\",\n  \"valorTotal\": 0.00,\n  \"dataInicioExecucao\": null,\n  \"dataFinalizacao\": null,\n  \"queixaCliente\": \"Barulho ao frear - Atualizado\",\n  \"urgente\": false\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_alterar_status_os",
+      "_type": "request",
+      "parentId": "fld_ordem_servico",
+      "name": "5. Alterar Status da OS",
+      "method": "PATCH",
+      "url": "{{ base_url }}/api/v1/ordens-servico/88888888-8888-4888-8888-888888888881/status",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"novoStatus\": \"EM_DIAGNOSTICO\",\n  \"mecanicoId\": \"77777777-7777-4777-8777-777777777771\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_remover_os",
+      "_type": "request",
+      "parentId": "fld_ordem_servico",
+      "name": "6. Remover OS",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/v1/ordens-servico/88888888-8888-4888-8888-888888888881",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "resp_remover_os",
+      "_type": "request",
+      "parentId": "fld_ordem_servico",
+      "name": "6a. Exemplo Response - Remover OS",
+      "method": "GET",
+      "url": "",
+      "description": "Resposta ao remover uma OS:\n{\n  \"id\": \"88888888-8888-4888-8888-888888888881\",\n  \"mensagem\": \"Ordem de Serviço deletada com sucesso\",\n  \"dataDelecao\": \"2026-06-21T20:45:30.123456\",\n  \"status\": \"DELETADO\"\n}",
+      "headers": []
+    },
+    {
+      "_id": "fld_orcamentos",
+      "_type": "request_group",
+      "parentId": "wrk_tech_challenge",
+      "name": "💰 Orçamentos"
+    },
+    {
+      "_id": "req_criar_orcamento",
+      "_type": "request",
+      "parentId": "fld_orcamentos",
+      "name": "1. Criar Orçamento (Inicial)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/ordens-servico/88888888-8888-4888-8888-888888888881/orcamentos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"INICIAL\",\n  \"prazoEstipulado\": \"2026-06-28\",\n  \"servicos\": [\n    {\n      \"servicoId\": \"77777777-7777-4777-8777-777777777773\"\n    }\n  ],\n  \"pecas\": [\n    {\n      \"pecaId\": \"55555555-5555-4555-8555-555555555550\",\n      \"quantidade\": 1\n    }\n  ]\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_criar_orcamento_adicional",
+      "_type": "request",
+      "parentId": "fld_orcamentos",
+      "name": "2. Criar Orçamento Adicional",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/ordens-servico/88888888-8888-4888-8888-888888888881/orcamentos",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"ADICIONAL\",\n  \"prazoEstipulado\": \"2026-06-25\",\n  \"servicos\": [\n    {\n      \"servicoId\": \"77777777-7777-4777-8777-777777777774\"\n    }\n  ],\n  \"pecas\": [\n    {\n      \"pecaId\": \"55555555-5555-4555-8555-555555555551\",\n      \"quantidade\": 2\n    }\n  ]\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_buscar_orcamento",
+      "_type": "request",
+      "parentId": "fld_orcamentos",
+      "name": "3. Buscar Orçamento por ID",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/ordens-servico/88888888-8888-4888-8888-888888888881/orcamentos/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_responder_orcamento",
+      "_type": "request",
+      "parentId": "fld_orcamentos",
+      "name": "4. Cliente Aprova/Rejeita Orçamento",
+      "method": "PATCH",
+      "url": "{{ base_url }}/api/public/atendimento/ordens/88888888-8888-4888-8888-888888888881/orcamentos/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1/status",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"APROVADO\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_autorizar_orcamento",
+      "_type": "request",
+      "parentId": "fld_orcamentos",
+      "name": "5. Cliente Autoriza Orçamento (Link Email)",
+      "method": "GET",
+      "url": "{{ base_url }}/api/public/atendimento/ordens/88888888-8888-4888-8888-888888888881/autorizar",
+      "headers": []
+    },
+    {
+      "_id": "fld_relatorios",
+      "_type": "request_group",
+      "parentId": "wrk_tech_challenge",
+      "name": "📊 Relatórios"
+    },
+    {
+      "_id": "req_relatorio_ordens",
+      "_type": "request",
+      "parentId": "fld_relatorios",
+      "name": "1. Relatório - Todas as Ordens",
+      "method": "GET",
+      "url": "{{ base_url }}/api/os/atendimento/relatorios/ordens-servico",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_relatorio_ordens_por_status",
+      "_type": "request",
+      "parentId": "fld_relatorios",
+      "name": "2. Relatório - Ordens por Status",
+      "method": "GET",
+      "url": "{{ base_url }}/api/os/atendimento/relatorios/ordens-servico/por-status?status=EM_DIAGNOSTICO",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "fld_cadastro",
+      "_type": "request_group",
+      "parentId": "wrk_tech_challenge",
+      "name": "👤 Cadastro - Clientes e Veículos"
+    },
+    {
+      "_id": "req_criar_cliente",
+      "_type": "request",
+      "parentId": "fld_cadastro",
+      "name": "1. Criar Cliente",
+      "method": "POST",
+      "url": "{{ base_url }}/clientes",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"João Silva\",\n  \"cpfCnpj\": \"52998224725\",\n  \"email\": \"joao@email.com\",\n  \"telefone\": \"11987654321\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_listar_clientes",
+      "_type": "request",
+      "parentId": "fld_cadastro",
+      "name": "2. Listar Clientes",
+      "method": "GET",
+      "url": "{{ base_url }}/clientes",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_buscar_cliente",
+      "_type": "request",
+      "parentId": "fld_cadastro",
+      "name": "3. Buscar Cliente (CPF/CNPJ)",
+      "method": "GET",
+      "url": "{{ base_url }}/clientes/52998224725",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_atualizar_cliente",
+      "_type": "request",
+      "parentId": "fld_cadastro",
+      "name": "4. Atualizar Cliente (CPF/CNPJ)",
+      "method": "PUT",
+      "url": "{{ base_url }}/clientes/52998224725",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"João Silva Atualizado\",\n  \"cpfCnpj\": \"52998224725\",\n  \"email\": \"joao.novo@email.com\",\n  \"telefone\": \"11987654322\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_deletar_cliente",
+      "_type": "request",
+      "parentId": "fld_cadastro",
+      "name": "5. Deletar Cliente (CPF/CNPJ)",
+      "method": "DELETE",
+      "url": "{{ base_url }}/clientes/52998224725",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "fld_estoque",
+      "_type": "request_group",
+      "parentId": "wrk_tech_challenge",
+      "name": "🏭 Estoque - Peças e Insumos"
+    },
+    {
+      "_id": "req_criar_peca",
+      "_type": "request",
+      "parentId": "fld_estoque",
+      "name": "1. Criar Peça/Insumo",
+      "method": "POST",
+      "url": "{{ base_url }}/estoque/itens",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Pastilha de Freio Dianteira\",\n  \"descricao\": \"Pastilha de freio para Corolla\",\n  \"precoVenda\": 200.00,\n  \"precoCompra\": 100.00,\n  \"quantidadeEstoque\": 50\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_listar_pecas",
+      "_type": "request",
+      "parentId": "fld_estoque",
+      "name": "2. Listar Peças/Insumos",
+      "method": "GET",
+      "url": "{{ base_url }}/estoque/itens",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_listar_pecas_minimo",
+      "_type": "request",
+      "parentId": "fld_estoque",
+      "name": "3. Listar Peças Abaixo do Mínimo",
+      "method": "GET",
+      "url": "{{ base_url }}/estoque/itens/abaixo-do-minimo",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_buscar_peca",
+      "_type": "request",
+      "parentId": "fld_estoque",
+      "name": "4. Buscar Peça por ID",
+      "method": "GET",
+      "url": "{{ base_url }}/estoque/itens/55555555-5555-4555-8555-555555555550",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_atualizar_peca",
+      "_type": "request",
+      "parentId": "fld_estoque",
+      "name": "5. Atualizar Peça",
+      "method": "PUT",
+      "url": "{{ base_url }}/estoque/itens/55555555-5555-4555-8555-555555555550",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Óleo de Motor 5W30 Sintético\",\n  \"descricao\": \"Lubrificante sintético API SN para motores flex, embalagem de 1 litro\",\n  \"precoVenda\": 65.00,\n  \"precoCompra\": 40.00,\n  \"quantidadeEstoque\": 40\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_registrar_entrada",
+      "_type": "request",
+      "parentId": "fld_estoque",
+      "name": "6. Registrar Entrada de Estoque",
+      "method": "PATCH",
+      "url": "{{ base_url }}/estoque/itens/55555555-5555-4555-8555-555555555550/entrada?quantidade=10&observacao=Compra-fornecedor",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_registrar_saida",
+      "_type": "request",
+      "parentId": "fld_estoque",
+      "name": "7. Registrar Saída de Estoque",
+      "method": "PATCH",
+      "url": "{{ base_url }}/estoque/itens/55555555-5555-4555-8555-555555555550/saida?quantidade=2&observacao=Uso-OS-001",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_deletar_peca",
+      "_type": "request",
+      "parentId": "fld_estoque",
+      "name": "8. Deletar Peça",
+      "method": "DELETE",
+      "url": "{{ base_url }}/estoque/itens/55555555-5555-4555-8555-555555555550",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    },
+    {
+      "_id": "req_listar_movimentacoes",
+      "_type": "request",
+      "parentId": "fld_estoque",
+      "name": "9. Listar Movimentações de Peça",
+      "method": "GET",
+      "url": "{{ base_url }}/estoque/movimentacoes/item/55555555-5555-4555-8555-555555555550",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer seu_token_jwt_aqui"
+        }
+      ]
+    }
+  ]
+}

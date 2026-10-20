@@ -1,0 +1,13 @@
+spring:
+  security:
+    enable-csrf: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+# Desabilitar autenticação para testes
+app:
+  security:
+    enabled: false
+  jwt:
+    secret: test-secret-key-for-testing-only

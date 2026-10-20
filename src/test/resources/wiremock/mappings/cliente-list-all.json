@@ -1,0 +1,37 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/clientes",
+    "headers": {
+      "Authorization": {
+        "matches": "Bearer .*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": [
+      {
+        "id": 1,
+        "nome": "João Silva",
+        "cpfCnpj": "12345678901",
+        "email": "joao@example.com",
+        "telefone": "(11) 98765-4321",
+        "dataCriacao": "2026-01-15T10:30:00",
+        "veiculos": []
+      },
+      {
+        "id": 2,
+        "nome": "Maria Santos",
+        "cpfCnpj": "98765432100",
+        "email": "maria@example.com",
+        "telefone": "(11) 91234-5678",
+        "dataCriacao": "2026-02-20T14:45:00",
+        "veiculos": []
+      }
+    ]
+  }
+}

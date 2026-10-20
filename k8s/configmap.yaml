@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tech-challenge-config
+data:
+  DB_NAME: tech_challenge
+  SPRING_DATASOURCE_URL: jdbc:postgresql://tech-challenge-postgres:5432/tech_challenge
+  MAIL_HOST: smtp.gmail.com
+  MAIL_PORT: "587"
+  MAIL_FROM: noreply@oficina-mecanica.com.br
+  FLYWAY_ENABLED: "true"
+  # O health check de e-mail depende de autenticacao SMTP valida. Como o envio
+  # de e-mail nao e essencial para a API servir trafego, o indicador fica
+  # desabilitado para nao derrubar as probes do Kubernetes (readiness/liveness).
+  MANAGEMENT_HEALTH_MAIL_ENABLED: "false"

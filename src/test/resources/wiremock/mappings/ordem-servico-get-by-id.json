@@ -1,0 +1,44 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPattern": "/api/atendimento/ordens/buscar\\?id=\\d+",
+    "headers": {
+      "Authorization": {
+        "matches": "Bearer .*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "id": 202401001,
+      "clienteId": 1,
+      "clienteNome": "João Silva",
+      "veiculoId": 1,
+      "veiculoModelo": "Honda Civic",
+      "veiculoPlaca": "ABC1234",
+      "mecanicoId": "a1b2c3d4-e5f6-4a5b-6c7d-8e9f0a1b2c3d",
+      "mecanicoNome": "Carlos Mecânico",
+      "status": "RECEBIDA",
+      "valorTotal": 0.00,
+      "valorTotalAcumulado": 0.00,
+      "urgente": false,
+      "dataInicioExecucao": null,
+      "dataFinalizacao": null,
+      "queixaCliente": "Problema no motor",
+      "observacoes": "Carro faz barulho estranho",
+      "orcamentos": [],
+      "historicoStatus": [
+        {
+          "ordemServicoId": 202401001,
+          "statusOrigem": null,
+          "statusDestino": "RECEBIDA",
+          "dataMudanca": "2026-06-24T10:00:00"
+        }
+      ]
+    }
+  }
+}

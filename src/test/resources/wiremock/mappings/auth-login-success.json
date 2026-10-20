@@ -1,0 +1,31 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/auth/login",
+    "bodyPatterns": [
+      {
+        "matchesJsonSchema": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            }
+          },
+          "required": ["email", "password"]
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpvw6NvIE1lY8OhbmljbyIsImlhdCI6MTUxNjIzOTAyMn0.R8E9lTHNbQjFjSnqUFnzTgzaGxKbYRNq4VblEwMu2BA"
+    }
+  }
+}

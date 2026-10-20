@@ -1,0 +1,44 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/clientes",
+    "headers": {
+      "Content-Type": {
+        "contains": "application/json"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matchesJsonSchema": {
+          "type": "object",
+          "properties": {
+            "nome": {
+              "type": "string"
+            },
+            "cpfCnpj": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            }
+          },
+          "required": ["nome", "cpfCnpj", "email"]
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "id": "{{randomValue length=19 type='ALPHANUMERIC'}}",
+      "nome": "{{jsonPath request.body '$.nome'}}",
+      "cpfCnpj": "{{jsonPath request.body '$.cpfCnpj'}}",
+      "email": "{{jsonPath request.body '$.email'}}",
+      "telefone": "{{jsonPath request.body '$.telefone'}}",
+      "dataCriacao": "{{now format='yyyy-MM-dd'T'HH:mm:ss'}}"
+    }
+  }
+}

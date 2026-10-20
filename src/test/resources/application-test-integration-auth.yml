@@ -1,0 +1,12 @@
+spring:
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  security:
+    enable-csrf: false
+
+app:
+  jwt:
+    secret: test-secret-key-for-testing-only

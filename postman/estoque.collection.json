@@ -1,0 +1,616 @@
+{
+  "info": {
+    "name": "Estoque - Tech Challenge",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token",   "value": "" },
+    { "key": "pecaId",  "value": "66666666-6666-4666-8666-666666666661" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Login (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('token', json.accessToken);",
+                  "  pm.test('Token salvo', () => pm.expect(json.accessToken).to.be.a('string'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@oficina.local\",\n  \"password\": \"123456\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Listagens",
+      "item": [
+        {
+          "name": "Listar todos os itens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/estoque/itens"
+          }
+        },
+        {
+          "name": "Buscar item por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Tem ID', () => pm.expect(json.id).to.equal(pm.collectionVariables.get('pecaId')));",
+                  "pm.test('Tem campo abaixoDoMinimo', () => pm.expect(json).to.have.property('abaixoDoMinimo'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/estoque/itens/{{pecaId}}"
+          }
+        },
+        {
+          "name": "Listar abaixo do mínimo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.response.json().forEach(item => {",
+                  "  pm.test('Item está abaixo do mínimo: ' + item.nome, () => pm.expect(item.abaixoDoMinimo).to.be.true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/estoque/itens/abaixo-do-minimo"
+          }
+        },
+        {
+          "name": "Listar movimentações do item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/estoque/movimentacoes/item/{{pecaId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Atualizar (gera AJUSTE se estoque mudar)",
+      "item": [
+        {
+          "name": "Atualizar peça - com mudança de estoque",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Nome atualizado', () => pm.expect(json.nome).to.equal('Oleo de Motor 5W30 Sintetico'));",
+                  "pm.test('Estoque atualizado', () => pm.expect(json.quantidadeEstoque).to.equal(45));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/estoque/itens/{{pecaId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Oleo de Motor 5W30 Sintetico\",\n  \"descricao\": \"Lubrificante sintetico atualizado\",\n  \"precoVenda\": 64.90,\n  \"precoCompra\": 38.00,\n  \"quantidadePorUnidade\": \"Litro\",\n  \"quantidadeEstoque\": 45,\n  \"quantidadeMinima\": 10\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar peça - sem mudança de estoque (sem AJUSTE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Nome atualizado', () => pm.expect(pm.response.json().nome).to.equal('Oleo de Motor 5W30 Premium'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/estoque/itens/{{pecaId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Oleo de Motor 5W30 Premium\",\n  \"descricao\": \"Lubrificante sintetico atualizado\",\n  \"precoVenda\": 69.90,\n  \"precoCompra\": 40.00,\n  \"quantidadePorUnidade\": \"Litro\",\n  \"quantidadeEstoque\": 45,\n  \"quantidadeMinima\": 10\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar peça - ID inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/estoque/itens/00000000-0000-0000-0000-000000000000",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Inexistente\",\n  \"precoVenda\": 10.00,\n  \"precoCompra\": 5.00,\n  \"quantidadeEstoque\": 1,\n  \"quantidadeMinima\": 0\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Movimentações",
+      "item": [
+        {
+          "name": "Entrada - cadastrar peça nova",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Peça criada com id', () => pm.expect(json.id).to.be.a('string'));",
+                  "pm.test('Estoque inicial', () => pm.expect(json.quantidadeEstoque).to.equal(30));",
+                  "pm.collectionVariables.set('pecaNovaId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/estoque/itens/entrada",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Correia Dentada\",\n  \"descricao\": \"Correia dentada para motor 1.0\",\n  \"precoVenda\": 89.90,\n  \"precoCompra\": 52.00,\n  \"quantidadePorUnidade\": \"Unidade\",\n  \"quantidade\": 30,\n  \"quantidadeMinima\": 8,\n  \"observacao\": \"Compra inicial NF-100\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Entrada - repor peça existente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/estoque/itens/entrada",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{pecaId}}\",\n  \"quantidade\": 20,\n  \"observacao\": \"Reposição mensal NF-001\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reserva para OS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/estoque/itens/{{pecaId}}/reserva?quantidade=5&observacao=Reserva para OS-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["estoque", "itens", "{{pecaId}}", "reserva"],
+              "query": [
+                { "key": "quantidade", "value": "5" },
+                { "key": "observacao", "value": "Reserva para OS-001" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Venda / Uso em OS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/estoque/itens/{{pecaId}}/venda?quantidade=3&observacao=Venda OS-002",
+              "host": ["{{baseUrl}}"],
+              "path": ["estoque", "itens", "{{pecaId}}", "venda"],
+              "query": [
+                { "key": "quantidade", "value": "3" },
+                { "key": "observacao", "value": "Venda OS-002" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Venda - estoque insuficiente (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem de erro presente', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/estoque/itens/{{pecaId}}/venda?quantidade=99999",
+              "host": ["{{baseUrl}}"],
+              "path": ["estoque", "itens", "{{pecaId}}", "venda"],
+              "query": [
+                { "key": "quantidade", "value": "99999" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reserva - estoque insuficiente (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensagem de erro presente', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/estoque/itens/{{pecaId}}/reserva?quantidade=99999",
+              "host": ["{{baseUrl}}"],
+              "path": ["estoque", "itens", "{{pecaId}}", "reserva"],
+              "query": [
+                { "key": "quantidade", "value": "99999" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Erros e segurança",
+      "item": [
+        {
+          "name": "Sem token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/estoque/itens"
+          }
+        },
+        {
+          "name": "Buscar ID inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/estoque/itens/00000000-0000-0000-0000-000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Fluxo completo",
+      "item": [
+        {
+          "name": "1. Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('token', json.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@oficina.local\",\n  \"password\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "2. Ver estoque atual",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var json = pm.response.json();",
+                  "pm.test('Tem quantidadeEstoque', () => pm.expect(json).to.have.property('quantidadeEstoque'));",
+                  "pm.test('Tem abaixoDoMinimo', () => pm.expect(json).to.have.property('abaixoDoMinimo'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/estoque/itens/{{pecaId}}"
+          }
+        },
+        {
+          "name": "3. Atualizar dados (gera AJUSTE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Estoque = 50', () => pm.expect(pm.response.json().quantidadeEstoque).to.equal(50));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/estoque/itens/{{pecaId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Oleo de Motor 5W30 Sintetico\",\n  \"descricao\": \"Lubrificante sintetico\",\n  \"precoVenda\": 64.90,\n  \"precoCompra\": 38.00,\n  \"quantidadePorUnidade\": \"Litro\",\n  \"quantidadeEstoque\": 50,\n  \"quantidadeMinima\": 10\n}"
+            }
+          }
+        },
+        {
+          "name": "4. Entrada de reposição",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/estoque/itens/entrada",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{pecaId}}\",\n  \"quantidade\": 10,\n  \"observacao\": \"Compra NF-001\"\n}"
+            }
+          }
+        },
+        {
+          "name": "5. Reservar para OS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/estoque/itens/{{pecaId}}/reserva?quantidade=4&observacao=Reserva OS-010",
+              "host": ["{{baseUrl}}"],
+              "path": ["estoque", "itens", "{{pecaId}}", "reserva"],
+              "query": [
+                { "key": "quantidade", "value": "4" },
+                { "key": "observacao", "value": "Reserva OS-010" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "6. Confirmar venda",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/estoque/itens/{{pecaId}}/venda?quantidade=4&observacao=Venda OS-010 confirmada",
+              "host": ["{{baseUrl}}"],
+              "path": ["estoque", "itens", "{{pecaId}}", "venda"],
+              "query": [
+                { "key": "quantidade", "value": "4" },
+                { "key": "observacao", "value": "Venda OS-010 confirmada" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "7. Ver movimentações (deve ter AJUSTE + ENTRADA + RESERVA + VENDA)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "var movs = pm.response.json();",
+                  "pm.test('Tem pelo menos 4 movimentações', () => pm.expect(movs.length).to.be.at.least(4));",
+                  "var tipos = movs.map(m => m.tipoMovimentacao);",
+                  "pm.test('Contém AJUSTE', () => pm.expect(tipos).to.include('AJUSTE'));",
+                  "pm.test('Contém ENTRADA', () => pm.expect(tipos).to.include('ENTRADA'));",
+                  "pm.test('Contém RESERVA', () => pm.expect(tipos).to.include('RESERVA'));",
+                  "pm.test('Contém VENDA', () => pm.expect(tipos).to.include('VENDA'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/estoque/movimentacoes/item/{{pecaId}}"
+          }
+        },
+        {
+          "name": "8. Verificar alertas de estoque baixo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/estoque/itens/abaixo-do-minimo"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tech-challenge-db
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${DB_NAME:-tech_challenge}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tech-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  wiremock:
+    image: wiremock/wiremock:3.9.1
+    container_name: tech-challenge-wiremock
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./src/test/resources/wiremock/mappings:/home/wiremock/mappings
+      - ./src/test/resources/wiremock/files:/home/wiremock/__files
+    networks:
+      - tech-network
+    command: --global-response-templating --disable-banner
+    environment:
+      WIREMOCK_DISABLE_BANNER: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/__admin/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: tech-challenge-mailhog
+    ports:
+      - "1025:1025"    # SMTP
+      - "8025:8025"    # Web UI
+    environment:
+      MH_SMTP_BIND_ADDR: "0.0.0.0:1025"
+      MH_UI_WEB_PATH: ""
+      MH_API_BIND_ADDR: "0.0.0.0:8025"
+    networks:
+      - tech-network
+
+  app:
+    build: .
+    container_name: tech-challenge-app
+    env_file: .env
+    ports:
+      - "8080:8080"
+      - "5005:5005"   # porta de debug
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-tech_challenge}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASS:-postgres}
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "false"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "false"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: "false"
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+    networks:
+      - tech-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      wiremock:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+
+networks:
+  tech-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

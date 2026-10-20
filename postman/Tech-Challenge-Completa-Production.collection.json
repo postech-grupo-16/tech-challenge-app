@@ -1,0 +1,1260 @@
+{
+  "info": {
+    "name": "Tech Challenge Backend - Collection Completa",
+    "description": "Collection completa da API Tech Challenge com arquitetura Hexagonal e DDD. Organizada por domínios: Acesso, Acompanhamento, Atendimento, Cadastro, Estoque e Shared. Contém dados REAIS do banco com todos os endpoints implementados.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. SHARED",
+      "description": "Domínio: Shared (Compartilhado)",
+      "item": [
+        {
+          "name": "Ping - Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/ping",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["ping"]
+            },
+            "description": "Verifica saúde da aplicação e banco de dados"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. ACESSO",
+      "description": "Domínio: Acesso - Autenticação e autorização",
+      "item": [
+        {
+          "name": "AuthController",
+          "item": [
+            {
+              "name": "Login - Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "  var jsonData = pm.response.json();",
+                      "  pm.globals.set('admin_token', jsonData.accessToken || jsonData.token);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin_1234\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/auth/login",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["auth", "login"]
+                },
+                "description": "Autentica usuário admin. ID: 77777777-7777-4777-8777-777777777770"
+              }
+            },
+            {
+              "name": "Login - Mecanico",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "  var jsonData = pm.response.json();",
+                      "  pm.globals.set('mecanico_token', jsonData.accessToken || jsonData.token);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"mecanico@oficina.com\",\n  \"password\": \"Admin_1234\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/auth/login",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["auth", "login"]
+                },
+                "description": "Autentica usuário mecânico (FUNCIONARIO). ID: 77777777-7777-4777-8777-777777777771"
+              }
+            },
+            {
+              "name": "Login - Cliente",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "  var jsonData = pm.response.json();",
+                      "  pm.globals.set('cliente_token', jsonData.accessToken || jsonData.token);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"ana.ribeiro@cliente.local\",\n  \"password\": \"Admin_1234\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/auth/login",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["auth", "login"]
+                },
+                "description": "Autentica usuário cliente. ID: 77777777-7777-4777-8777-777777777772"
+              }
+            },
+            {
+              "name": "Me - Dados do usuário autenticado",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/me",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["me"]
+                },
+                "description": "Retorna dados do usuário autenticado (nome, authorities, etc)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. CADASTRO",
+      "description": "Domínio: Cadastro - Clientes e Veículos",
+      "item": [
+        {
+          "name": "ClienteController",
+          "item": [
+            {
+              "name": "POST - Cadastrar novo cliente",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"João Silva Santos\",\n  \"email\": \"joao.silva@email.com\",\n  \"senha\": \"Senha_123456\",\n  \"cpfCnpj\": \"98765432100\",\n  \"telefone\": \"11987654321\",\n  \"cep\": \"01310100\",\n  \"rua\": \"Avenida Paulista\",\n  \"numero\": \"1000\",\n  \"complemento\": \"Apto 501\",\n  \"cidade\": \"Sao Paulo\",\n  \"estado\": \"SP\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/clientes",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["clientes"]
+                },
+                "description": "Cria novo cliente (usuário + cadastro)"
+              }
+            },
+            {
+              "name": "GET - Listar todos os clientes",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/clientes",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["clientes"]
+                },
+                "description": "Lista todos os clientes cadastrados"
+              }
+            },
+            {
+              "name": "GET - Buscar cliente por CPF/CNPJ",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/clientes/52998224725",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["clientes", "52998224725"]
+                },
+                "description": "Busca cliente específico pelo CPF/CNPJ (Ana Paula: 52998224725)"
+              }
+            },
+            {
+              "name": "PUT - Atualizar cliente",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Ana Paula Ribeiro Silva\",\n  \"telefone\": \"11999999999\",\n  \"cep\": \"04003000\",\n  \"rua\": \"Rua Vergueiro\",\n  \"numero\": \"3000\",\n  \"complemento\": \"Sala 200\",\n  \"cidade\": \"Sao Paulo\",\n  \"estado\": \"SP\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/clientes/52998224725",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["clientes", "52998224725"]
+                },
+                "description": "Atualiza dados do cliente (Ana Paula: 52998224725)"
+              }
+            },
+            {
+              "name": "DELETE - Deletar cliente",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/clientes/98765432100",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["clientes", "98765432100"]
+                },
+                "description": "Delete cliente por CPF/CNPJ (usar cliente de teste)"
+              }
+            }
+          ]
+        },
+        {
+          "name": "VeiculoController",
+          "item": [
+            {
+              "name": "POST - Cadastrar novo veículo",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"placa\": \"XYZ9999\",\n  \"marca\": \"Volkswagen\",\n  \"modelo\": \"Gol\",\n  \"ano\": 2023,\n  \"cor\": \"Vermelho\",\n  \"cpfCnpj\": \"52998224725\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/veiculos",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["veiculos"]
+                },
+                "description": "Cria novo veículo (CPF/CNPJ: 52998224725 - Ana Paula)"
+              }
+            },
+            {
+              "name": "GET - Listar todos os veículos",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/veiculos",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["veiculos"]
+                },
+                "description": "Lista todos os veículos cadastrados"
+              }
+            },
+            {
+              "name": "GET - Buscar veículo por placa",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/veiculos/ABC1234",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["veiculos", "ABC1234"]
+                },
+                "description": "Busca veículo específico por placa (Corolla ABC1234)"
+              }
+            },
+            {
+              "name": "PUT - Atualizar veículo",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"modelo\": \"Corolla SE 2020\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/veiculos/ABC1234",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["veiculos", "ABC1234"]
+                },
+                "description": "Atualiza dados do veículo (placa ABC1234)"
+              }
+            },
+            {
+              "name": "DELETE - Deletar veículo",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/veiculos/XYZ9999",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["veiculos", "XYZ9999"]
+                },
+                "description": "Deleta veiculo por placa. O veiculo sera marcado como removido, mas todo historico de ordens de servico sera preservado."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. ESTOQUE",
+      "description": "Domínio: Estoque - Peças, insumos e movimentações",
+      "item": [
+        {
+          "name": "ItemEstoqueController",
+          "item": [
+            {
+              "name": "POST - Cadastrar novo item de estoque",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Bateria Moura 60Ah\",\n  \"descricao\": \"Bateria automotiva para carros com motor 1.4 até 2.0\",\n  \"precoVenda\": 450.00,\n  \"precoCompra\": 280.00,\n  \"quantidadePorUnidade\": \"1 unidade\",\n  \"quantidadeEstoque\": 15,\n  \"quantidadeMinima\": 3,\n  \"tipo\": \"PECA\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/estoque/itens",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["estoque", "itens"]
+                },
+                "description": "Cria novo item de estoque (peça ou insumo)"
+              }
+            },
+            {
+              "name": "POST - Dar entrada no estoque",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Vela de Ignição Champion\",\n  \"descricao\": \"Vela para motores 1.0 a 2.0\",\n  \"precoVenda\": 85.00,\n  \"precoCompra\": 45.00,\n  \"quantidadePorUnidade\": \"1 unidade\",\n  \"quantidade\": 25,\n  \"quantidadeMinima\": 5,\n  \"tipo\": \"PECA\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/estoque/itens/entrada",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["estoque", "itens", "entrada"]
+                },
+                "description": "Registra entrada de novo item ou repõe estoque existente"
+              }
+            },
+            {
+              "name": "GET - Listar todos os itens",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/estoque/itens",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["estoque", "itens"]
+                },
+                "description": "Lista todos os itens do estoque"
+              }
+            },
+            {
+              "name": "GET - Buscar item por ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/estoque/itens/55555555-5555-4555-8555-555555555550",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["estoque", "itens", "55555555-5555-4555-8555-555555555550"]
+                },
+                "description": "Busca item específico (Óleo 5W30)"
+              }
+            },
+            {
+              "name": "GET - Listar itens abaixo do mínimo",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/estoque/itens/abaixo-do-minimo",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["estoque", "itens", "abaixo-do-minimo"]
+                },
+                "description": "Lista itens com quantidade abaixo do mínimo estabelecido"
+              }
+            },
+            {
+              "name": "PUT - Atualizar item",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Óleo de Motor 5W30 Sintético Premium\",\n  \"descricao\": \"Óleo sintético API SN para motores flex\",\n  \"precoVenda\": 64.90,\n  \"precoCompra\": 38.50,\n  \"quantidadePorUnidade\": \"1 litro\",\n  \"quantidadeEstoque\": 45,\n  \"quantidadeMinima\": 12,\n  \"tipo\": \"INSUMO\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/estoque/itens/55555555-5555-4555-8555-555555555550",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["estoque", "itens", "55555555-5555-4555-8555-555555555550"]
+                },
+                "description": "Atualiza dados de item existente"
+              }
+            },
+            {
+              "name": "PATCH - Registrar entrada de item",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/estoque/itens/55555555-5555-4555-8555-555555555550/entrada?quantidade=10&observacao=Reposição de estoque mensal",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["estoque", "itens", "55555555-5555-4555-8555-555555555550", "entrada"],
+                  "query": [
+                    {
+                      "key": "quantidade",
+                      "value": "10"
+                    },
+                    {
+                      "key": "observacao",
+                      "value": "Reposição de estoque mensal"
+                    }
+                  ]
+                },
+                "description": "Registra entrada (incremento) de quantidade"
+              }
+            },
+            {
+              "name": "PATCH - Registrar saída de item",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/estoque/itens/55555555-5555-4555-8555-555555555550/saida?quantidade=2&observacao=Venda balcão cliente João Silva",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["estoque", "itens", "55555555-5555-4555-8555-555555555550", "saida"],
+                  "query": [
+                    {
+                      "key": "quantidade",
+                      "value": "2"
+                    },
+                    {
+                      "key": "observacao",
+                      "value": "Venda balcão cliente João Silva"
+                    }
+                  ]
+                },
+                "description": "Registra saída (decremento) de quantidade"
+              }
+            },
+            {
+              "name": "DELETE - Deletar item",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/estoque/itens/00000000-0000-4000-8000-000000000000",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["estoque", "itens", "00000000-0000-4000-8000-000000000000"]
+                },
+                "description": "Deleta item do estoque. O item sera marcado como removido, mas todo historico de utilizacao nas ordens sera preservado."
+              }
+            }
+          ]
+        },
+        {
+          "name": "MovimentacaoController",
+          "item": [
+            {
+              "name": "GET - Listar movimentações do item",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/estoque/movimentacoes/item/55555555-5555-4555-8555-555555555550",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["estoque", "movimentacoes", "item", "55555555-5555-4555-8555-555555555550"]
+                },
+                "description": "Listar histórico de movimentações de um item do estoque"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. ATENDIMENTO",
+      "description": "Domínio: Atendimento - Ordens de serviço, serviços e orçamentos",
+      "item": [
+        {
+          "name": "OrdemServicoController (Hexagonal)",
+          "item": [
+            {
+              "name": "POST - Criar ordem de serviço",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpfCnpjCliente\": \"52998224725\",\n  \"placaVeiculo\": \"ABC1234\",\n  \"queixaCliente\": \"Carro com problemas de partida e ruidos estranhos\",\n  \"observacoes\": \"Preferencia por servico rapido\",\n  \"urgente\": false\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/v1/ordens-servico/criar",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "v1", "ordens-servico", "criar"]
+                },
+                "description": "Cria nova ordem de servico usando CPF/CNPJ e placa do veiculo"
+              }
+            },
+            {
+              "name": "GET - Listar todas as ordens",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/v1/ordens-servico/listar-os",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "v1", "ordens-servico", "listar-os"]
+                },
+                "description": "Lista todas as ordens de serviço (apenas ADMIN e FUNCIONARIO)"
+              }
+            },
+            {
+              "name": "GET - Buscar ordem por ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/v1/ordens-servico/buscar?id=20260001",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "v1", "ordens-servico", "buscar"],
+                  "query": [
+                    {
+                      "key": "id",
+                      "value": "20260001"
+                    }
+                  ]
+                },
+                "description": "Busca ordem específica por ID (20260001 - EM_DIAGNOSTICO)"
+              }
+            },
+            {
+              "name": "PUT - Atualizar ordem de serviço",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"descricao\": \"Necessario troca de oleo, filtro e limpeza do motor\",\n  \"observacoes\": \"Cliente informou que o carro esta fazendo barulho anormal\",\n  \"urgente\": true\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/v1/ordens-servico/editar?id=20260001",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "v1", "ordens-servico", "editar"],
+                  "query": [
+                    {
+                      "key": "id",
+                      "value": "20260001"
+                    }
+                  ]
+                },
+                "description": "Atualiza dados da ordem de serviço"
+              }
+            },
+            {
+              "name": "PATCH - Alterar status da ordem",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"novoStatus\": \"EM_EXECUCAO\",\n  \"mecanicoId\": \"77777777-7777-4777-8777-777777777771\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/v1/ordens-servico/alterar-status?id=20260001",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "v1", "ordens-servico", "alterar-status"],
+                  "query": [
+                    {
+                      "key": "id",
+                      "value": "20260001"
+                    }
+                  ]
+                },
+                "description": "Altera status da OS (RECEBIDA → EM_DIAGNOSTICO → AGUARDANDO_APROVACAO → EM_EXECUCAO → FINALIZADA → ENTREGUE)"
+              }
+            },
+            {
+              "name": "DELETE - Deletar ordem (ADMIN)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/v1/ordens-servico/deletar?id=20260001",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "v1", "ordens-servico", "deletar"],
+                  "query": [
+                    {
+                      "key": "id",
+                      "value": "20260001"
+                    }
+                  ]
+                },
+                "description": "Deleta ordem de serviço (apenas ADMIN)"
+              }
+            },
+            {
+              "name": "POST - Criar orçamento",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"descricao\": \"Diagnostico completo e troca de pecas desgastadas\",\n  \"valor\": 580.00,\n  \"prazoEstimadoDias\": 3\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/v1/ordens-servico/criar-orcamento?id=20260001",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "v1", "ordens-servico", "criar-orcamento"],
+                  "query": [
+                    {
+                      "key": "id",
+                      "value": "20260001"
+                    }
+                  ]
+                },
+                "description": "Cria novo orçamento para ordem de serviço"
+              }
+            },
+            {
+              "name": "GET - Buscar orçamento",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/v1/ordens-servico/buscar-orcamento?idOS=20260001&idOrcamento=26000001",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "v1", "ordens-servico", "buscar-orcamento"],
+                  "query": [
+                    {
+                      "key": "idOS",
+                      "value": "20260001"
+                    },
+                    {
+                      "key": "idOrcamento",
+                      "value": "26000001"
+                    }
+                  ]
+                },
+                "description": "Busca orçamento específico de uma ordem"
+              }
+            }
+          ]
+        },
+        {
+          "name": "ClienteOrdemServicoController (Pública)",
+          "item": [
+            {
+              "name": "GET - Autorizar orçamento (via email)",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/public/atendimento/ordens/20260002/autorizar",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "public", "atendimento", "ordens", "20260002", "autorizar"]
+                },
+                "description": "Endpoint público para cliente autorizar orçamento via link de email"
+              }
+            },
+            {
+              "name": "PATCH - Responder orçamento (aprovar/rejeitar)",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"APROVADO\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/public/atendimento/ordens/20260002/orcamentos/26000002/status",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "public", "atendimento", "ordens", "20260002", "orcamentos", "26000002", "status"]
+                },
+                "description": "Cliente aprova ou rejeita um orçamento (público, sem autenticação)"
+              }
+            }
+          ]
+        },
+        {
+          "name": "RelatorioAtendimentoController",
+          "item": [
+            {
+              "name": "GET - Relatório todas as ordens",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/os/atendimento/relatorios/ordens-servico",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "os", "atendimento", "relatorios", "ordens-servico"]
+                },
+                "description": "Relatório detalhado de todas as ordens de serviço (ADMIN/FUNCIONARIO)"
+              }
+            },
+            {
+              "name": "GET - Relatório ordens por status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/os/atendimento/relatorios/ordens-servico/por-status?status=EM_EXECUCAO",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "os", "atendimento", "relatorios", "ordens-servico", "por-status"],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "EM_EXECUCAO"
+                    }
+                  ]
+                },
+                "description": "Relatório de ordens filtradas por status"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. ACOMPANHAMENTO",
+      "description": "Domínio: Acompanhamento - Consulta de ordens por cliente",
+      "item": [
+        {
+          "name": "AcompanhamentoController",
+          "item": [
+            {
+              "name": "GET - Listar ordens do cliente",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/clientes/88888888-8888-4888-8888-888888888880/ordens",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["clientes", "88888888-8888-4888-8888-888888888880", "ordens"]
+                },
+                "description": "Lista todas as ordens de serviço do cliente (Ana Paula: 88888888-8888-4888-8888-888888888880)"
+              }
+            },
+            {
+              "name": "GET - Detalhe de ordem do cliente",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "seu_token_aqui",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/clientes/88888888-8888-4888-8888-888888888880/ordens/20260001",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["clientes", "88888888-8888-4888-8888-888888888880", "ordens", "20260001"]
+                },
+                "description": "Detalhes de ordem especifica do cliente"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

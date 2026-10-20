@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: tech-challenge-backend
+  datasource:
+    # Prefer explicit SPRING_DATASOURCE_URL if provided; otherwise fallback to DB_NAME and localhost (port 5433)
+    # (used by docker-compose.dev.yml when the PostgreSQL container is exposed on 5433)
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/${DB_NAME:tech_challenge}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASS:postgres}}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    # Let Flyway use the application's DataSource (do not provide separate url/user/password)
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    table: flyway_schema_history
+    schemas: public
+    placeholder-replacement: true
+    # retry connection a few times (helps when DB takes a while to be ready)
+    connect-retries: 10
+    connect-retries-interval: 5s
+  mail:
+    # Configuração de Email - Gmail SMTP
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:oficinagrupo015@gmail.com}
+    password: ${MAIL_PASSWORD:rpdb hkbn hpwp cwwn}
+    from: ${MAIL_FROM:noreply@oficina-mecanica.com.br}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:uma-chave-local-de-desenvolvimento-com-32-caracteres}

@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPattern": "/clientes/\\d+",
+    "headers": {
+      "Authorization": {
+        "matches": "Bearer .*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "id": 1,
+      "nome": "João Silva",
+      "cpfCnpj": "12345678901",
+      "email": "joao@example.com",
+      "telefone": "(11) 98765-4321",
+      "dataCriacao": "2026-01-15T10:30:00",
+      "veiculos": [
+        {
+          "id": 1,
+          "placa": "ABC1234",
+          "modelo": "Honda Civic",
+          "ano": 2020
+        }
+      ]
+    }
+  }
+}
