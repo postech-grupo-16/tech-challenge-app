@@ -9,4 +9,9 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
-  type: ClusterIP
+  # LoadBalancer em vez de ClusterIP: precisa de um IP/DNS publico pro API
+  # Gateway (tech-challenge-auth-lambda) conseguir fazer proxy ate a app.
+  # Usa o ELB classico/NLB automatico do EKS (via LabRole do node), sem
+  # precisar instalar o AWS Load Balancer Controller nem IRSA/OIDC (ver ADR
+  # sobre split em 4 repositorios / infra-k8s).
+  type: LoadBalancer
