@@ -11,6 +11,11 @@ Este repositório contém **só a aplicação principal**, que roda em Kubernete
 | [tech-challenge-infra-db](https://github.com/Gabrielfsg/tech-challenge-infra-db) | Terraform: banco de dados gerenciado (RDS PostgreSQL) |
 | [tech-challenge-auth-lambda](https://github.com/Gabrielfsg/tech-challenge-auth-lambda) | Function Serverless de autenticação via CPF + API Gateway |
 
+## 📐 Documentação arquitetural
+
+- [`docs/`](docs/README.md) — diagrama de componentes, diagrama de sequência, diagrama ER + justificativa do banco, RFCs e ADRs.
+- [`guia-deploy-tech-challenge-fase3.pdf`](guia-deploy-tech-challenge-fase3.pdf) — passo a passo completo de deploy (sequência entre os 4 repositórios, comandos exatos, problemas reais encontrados e como testar o fluxo de autenticação).
+
 ## Visão Geral
 
 Sistema completo para:
