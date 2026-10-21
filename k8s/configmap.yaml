@@ -4,7 +4,10 @@ metadata:
   name: tech-challenge-config
 data:
   DB_NAME: tech_challenge
-  SPRING_DATASOURCE_URL: jdbc:postgresql://tech-challenge-postgres:5432/tech_challenge
+  # RDS exige SSL (rds.force_ssl=1) - o driver JDBC tenta SSL por padrao
+  # (sslmode=prefer), mas deixamos explicito depois de apanhar com isso na
+  # Lambda (node-postgres nao tenta SSL a menos que configurado).
+  SPRING_DATASOURCE_URL: jdbc:postgresql://tech-challenge-db.cbm82awmuhxa.us-east-1.rds.amazonaws.com:5432/tech_challenge?sslmode=require
   MAIL_HOST: smtp.gmail.com
   MAIL_PORT: "587"
   MAIL_FROM: noreply@oficina-mecanica.com.br
