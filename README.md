@@ -67,6 +67,8 @@ Veja [`k8s/README.md`](k8s/README.md) para o passo a passo completo, incluindo t
 
 O pipeline ([`.github/workflows/pipeline.yml`](.github/workflows/pipeline.yml)) builda, testa (unitários + integração), publica a imagem no ECR e faz deploy automático no EKS a cada push na `main`. A branch `main` é protegida — merges só via Pull Request.
 
+Análise estática de código via [SonarCloud](https://sonarcloud.io/project/overview?id=gabrielfsg_tech-challenge-app) ([`.github/workflows/sonar.yml`](.github/workflows/sonar.yml)), rodando em todo push na `main`/`feature/**` e em Pull Requests.
+
 ## Testes
 
 ```bash
