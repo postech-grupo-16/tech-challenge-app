@@ -20,6 +20,11 @@
 - [0002 — Autoscaling via HPA](adrs/0002-hpa-autoscaling.md)
 - [0003 — Split em 4 repositórios, sem preservar histórico](adrs/0003-split-em-4-repositorios.md)
 - [0004 — Service LoadBalancer, sem AWS Load Balancer Controller/IRSA](adrs/0004-service-loadbalancer-sem-irsa.md)
+- [0005 — Observabilidade com New Relic (agente APM + nri-bundle)](adrs/0005-observabilidade-new-relic.md)
+
+## Observabilidade
+
+- [Observabilidade com New Relic](observability.md): latência, CPU/memória do K8s, healthcheck/uptime, alertas de OS e logs JSON correlacionados (passo a passo).
 
 ## Repositórios do projeto
 

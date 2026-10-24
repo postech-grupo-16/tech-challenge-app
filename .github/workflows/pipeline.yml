@@ -199,6 +199,34 @@ jobs:
       - name: Atualizar kubeconfig do Cluster EKS
         run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
 
+      # Observabilidade (ver docs/observability.md). A license key vem de um
+      # secret do GitHub e vira um Secret do K8s — nunca é versionada.
+      - name: Criar Secret do New Relic
+        env:
+          NR_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+        run: |
+          kubectl create namespace "$K8S_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n "$K8S_NAMESPACE" create secret generic newrelic-license \
+            --from-literal=license_key="$NR_KEY" --dry-run=client -o yaml | kubectl apply -f -
+
+      # CPU/memória/eventos do cluster. Idempotente: reinstala sozinho quando o
+      # cluster do AWS Academy é recriado. Logs ficam com o agente APM
+      # (logging.enabled=false evita logs duplicados).
+      - name: Instalar/atualizar New Relic Kubernetes integration
+        env:
+          NR_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+        run: |
+          helm repo add newrelic https://helm-charts.newrelic.com
+          helm repo update
+          helm upgrade --install newrelic-bundle newrelic/nri-bundle \
+            --namespace newrelic --create-namespace \
+            --set global.licenseKey="$NR_KEY" \
+            --set global.cluster="$EKS_CLUSTER_NAME" \
+            --set newrelic-infrastructure.privileged=true \
+            --set kube-state-metrics.enabled=true \
+            --set kubeEvents.enabled=true \
+            --set logging.enabled=false
+
       # TODO (Fase 4/5): buscar SPRING_DATASOURCE_URL, JWT_SECRET e demais segredos
       # via `aws ssm get-parameter` (publicados pelos repos infra-db/auth-lambda) e
       # popular k8s/secret.yaml + k8s/configmap.yaml antes do apply, em vez de usar
