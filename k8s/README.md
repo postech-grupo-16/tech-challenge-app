@@ -11,8 +11,9 @@ funcionando.
 
 > ⚠️ Para testar localmente via Kind, você precisa de um Postgres acessível
 > (ex.: `docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16-alpine`)
-> e apontar `SPRING_DATASOURCE_URL` no `configmap.yaml` para ele. Em produção,
-> essa URL aponta para o endpoint do RDS criado pelo `tech-challenge-infra-db`.
+> e apontar `SPRING_DATASOURCE_URL` no `secret.yaml` para ele. No EKS
+> (produção e homolog), o CI cria o Secret com a URL do RDS criado pelo
+> `tech-challenge-infra-db`, lida do SSM — o `secret.yaml` não é aplicado lá.
 
 ---
 
@@ -21,8 +22,8 @@ funcionando.
 | Arquivo | Recurso | Função |
 |---------|---------|--------|
 | `namespace.yaml` | Namespace | Isola tudo no namespace `tech-challenge` |
-| `configmap.yaml` | ConfigMap | Configurações não sensíveis (URL do banco, host de e-mail, flags) |
-| `secret.yaml` | Secret | Credenciais (banco, JWT, e-mail) — **apenas placeholders** |
+| `configmap.yaml` | ConfigMap | Configurações não sensíveis (host de e-mail, flags) |
+| `secret.yaml` | Secret | URL e credenciais do banco, JWT, e-mail — **apenas placeholders**, só para uso local |
 | `app-deployment.yaml` | Deployment | A aplicação Spring Boot (2 réplicas) |
 | `app-service.yaml` | Service | Acesso interno à API (ClusterIP) |
 | `app-ingress.yaml` | Ingress | Exposição HTTP externa (host `tech-challenge.local`) |

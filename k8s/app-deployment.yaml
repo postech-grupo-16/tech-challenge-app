@@ -41,8 +41,8 @@ spec:
                   key: DB_PASS
             - name: SPRING_DATASOURCE_URL
               valueFrom:
-                configMapKeyRef:
-                  name: tech-challenge-config
+                secretKeyRef:
+                  name: tech-challenge-secrets
                   key: SPRING_DATASOURCE_URL
             - name: JWT_SECRET
               valueFrom:
