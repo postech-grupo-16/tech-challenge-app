@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - homolog
       - 'feature/**'
   pull_request:
     branches:
       - main
+      - homolog
 
 jobs:
   sonar:
