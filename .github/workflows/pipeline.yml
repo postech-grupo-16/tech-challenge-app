@@ -292,5 +292,7 @@ jobs:
           kubectl -n "$K8S_NAMESPACE" set image \
             "deployment/$K8S_DEPLOYMENT" "$K8S_CONTAINER=${{ needs.build-and-push-image.outputs.image }}"
 
+      # 10 min: cobre a janela de 5 min que o HPA espera antes de reduzir
+      # réplicas (scale-down stabilization) mais o start da app com o agente.
       - name: Aguardar Rollout
-        run: kubectl -n "$K8S_NAMESPACE" rollout status "deployment/$K8S_DEPLOYMENT" --timeout=300s
+        run: kubectl -n "$K8S_NAMESPACE" rollout status "deployment/$K8S_DEPLOYMENT" --timeout=600s
