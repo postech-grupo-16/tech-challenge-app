@@ -253,11 +253,17 @@ jobs:
           kubectl -n "$K8S_NAMESPACE" create configmap newrelic-config \
             --from-literal=NEW_RELIC_APP_NAME="$NR_APP_NAME" \
             --from-literal=NEW_RELIC_LABELS="env:$NR_ENV;team:grupo15" \
+            --from-literal=NEW_RELIC_METADATA_KUBERNETES_CLUSTER_NAME="$EKS_CLUSTER_NAME" \
             --dry-run=client -o yaml | kubectl apply -f -
 
       # CPU/memória/eventos do cluster. Idempotente: reinstala sozinho quando o
       # cluster do AWS Academy é recriado. Logs ficam com o agente APM
       # (logging.enabled=false evita logs duplicados).
+      # webhook.enabled=false: o webhook de metadata-injection tem o caBundle
+      # reescrito pelo job kube-webhook-certgen, o que conflita com o
+      # server-side apply do Helm 4 e quebra o upgrade. As variáveis que ele
+      # injetaria (pod/nó/cluster de cada transação do APM) são declaradas
+      # direto no k8s/app-deployment.yaml. Desligado também libera ~100m de CPU.
       - name: Instalar/atualizar New Relic Kubernetes integration
         env:
           NR_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
@@ -271,7 +277,8 @@ jobs:
             --set newrelic-infrastructure.privileged=true \
             --set kube-state-metrics.enabled=true \
             --set kubeEvents.enabled=true \
-            --set logging.enabled=false
+            --set logging.enabled=false \
+            --set webhook.enabled=false
 
       - name: Aplicar Manifests Kubernetes
         run: |

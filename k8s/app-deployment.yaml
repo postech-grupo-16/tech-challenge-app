@@ -94,6 +94,31 @@ spec:
                   name: newrelic-config
                   key: NEW_RELIC_LABELS
                   optional: true
+            # Metadados do Kubernetes nas transações do APM (em qual pod/nó cada
+            # requisição rodou). São as mesmas variáveis que o webhook de
+            # metadata-injection do New Relic injetaria, declaradas aqui direto.
+            - name: NEW_RELIC_METADATA_KUBERNETES_CLUSTER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: newrelic-config
+                  key: NEW_RELIC_METADATA_KUBERNETES_CLUSTER_NAME
+                  optional: true
+            - name: NEW_RELIC_METADATA_KUBERNETES_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NEW_RELIC_METADATA_KUBERNETES_NAMESPACE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NEW_RELIC_METADATA_KUBERNETES_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NEW_RELIC_METADATA_KUBERNETES_DEPLOYMENT_NAME
+              value: tech-challenge-app
+            - name: NEW_RELIC_METADATA_KUBERNETES_CONTAINER_NAME
+              value: app
           readinessProbe:
             httpGet:
               path: /actuator/health
