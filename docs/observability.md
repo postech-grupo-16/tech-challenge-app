@@ -136,5 +136,9 @@ Os alertas de healthcheck/uptime estão na tabela abaixo.
   e se o pod foi recriado depois dele (`kubectl -n tech-challenge rollout restart deploy tech-challenge-app`).
 - **Cluster não aparece:** `kubectl -n newrelic get pods`. Os pods `newrelic-infrastructure` precisam rodar
   como *privileged* (DaemonSet), o que os nodes do EKS permitem por padrão.
+- **`helm upgrade` falha com `conflict with "kube-webhook-certgen"`:** é o webhook de metadata-injection
+  brigando com o server-side apply do Helm 4. O pipeline instala com `webhook.enabled=false` para evitar isso;
+  as variáveis `NEW_RELIC_METADATA_KUBERNETES_*` que ele injetaria (pod, nó, namespace, cluster) estão
+  declaradas direto no `k8s/app-deployment.yaml`, então o APM continua mostrando onde cada requisição rodou.
 - **Log duplicado:** o `nri-bundle` é instalado com `logging.enabled=false` justamente para que só o
   agente APM envie logs.
