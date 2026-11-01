@@ -65,7 +65,14 @@ Veja [`k8s/README.md`](k8s/README.md) para o passo a passo completo, incluindo t
 
 ## CI/CD
 
-O pipeline ([`.github/workflows/pipeline.yml`](.github/workflows/pipeline.yml)) builda, testa (unitários + integração), publica a imagem no ECR e faz deploy automático no EKS a cada push na `main`. A branch `main` é protegida — merges só via Pull Request.
+O pipeline ([`.github/workflows/pipeline.yml`](.github/workflows/pipeline.yml)) builda, testa (unitários + integração), publica a imagem no ECR e faz deploy automático no EKS. São dois ambientes, cada um com sua própria stack AWS (VPC, EKS, ECR, RDS, Lambda/API Gateway):
+
+| Branch | Ambiente | Parâmetros SSM |
+|--------|----------|----------------|
+| `homolog` | homolog | `/tech-challenge-homolog/*` |
+| `main` | produção | `/tech-challenge/*` |
+
+Fluxo: `feature/*` → PR para `homolog` (só testes) → merge → deploy em homolog → PR `homolog` → `main` → merge → deploy em produção. As duas branches são protegidas — merges só via Pull Request. O Secret do Kubernetes (URL do banco, credenciais, JWT) é montado pelo CI a partir do SSM do ambiente; `MAIL_USERNAME`/`MAIL_PASSWORD` vêm dos secrets do repositório.
 
 Análise estática de código via [SonarCloud](https://sonarcloud.io/project/overview?id=gabrielfsg_tech-challenge-app) ([`.github/workflows/sonar.yml`](.github/workflows/sonar.yml)), rodando em todo push na `main`/`feature/**` e em Pull Requests.
 

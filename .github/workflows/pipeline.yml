@@ -1,16 +1,21 @@
 name: Java CI/CD Pipeline
 
+# Dois ambientes, escolhidos pela branch:
+#   main    -> production (parametros SSM em /tech-challenge/*)
+#   homolog -> homolog    (parametros SSM em /tech-challenge-homolog/*)
+# O nome do cluster EKS, o repositorio ECR, o banco e o segredo JWT de cada
+# ambiente sao publicados no SSM pelos repos infra-k8s, infra-db e
+# auth-lambda - este pipeline so precisa saber o prefixo.
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "homolog" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "homolog" ]
   workflow_dispatch: {}
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: tech-challenge-backend
-  EKS_CLUSTER_NAME: eks-tech-challenge
+  SSM_PREFIX: ${{ github.ref_name == 'homolog' && '/tech-challenge-homolog' || '/tech-challenge' }}
   K8S_NAMESPACE: tech-challenge
   K8S_DEPLOYMENT: tech-challenge-app
   K8S_CONTAINER: app
@@ -140,8 +145,8 @@ jobs:
     name: Build & Push (ECR)
     runs-on: ubuntu-latest
     needs: [ test, integration-test ]
-    # Só roda quando o PR for mergeado na main (push) ou via dispatch manual — nunca em pull_request.
-    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
+    # Só roda quando o PR for mergeado na main/homolog (push) ou via dispatch manual — nunca em pull_request.
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/homolog' || github.event_name == 'workflow_dispatch')
 
     outputs:
       image: ${{ steps.build-image.outputs.image }}
@@ -162,6 +167,11 @@ jobs:
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Descobrir Repositório ECR do Ambiente
+        run: |
+          ECR_REPOSITORY=$(aws ssm get-parameter --name "$SSM_PREFIX/ecr_repository_name" --query Parameter.Value --output text)
+          echo "ECR_REPOSITORY=$ECR_REPOSITORY" >> "$GITHUB_ENV"
+
       - name: Build, Tag e Push da Imagem Docker
         id: build-image
         env:
@@ -177,12 +187,13 @@ jobs:
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
   # JOB 5: DEPLOY NO CLUSTER KUBERNETES (EKS)
-  # Pressupõe que o cluster já foi provisionado pelo repositório tech-challenge-infra-k8s.
+  # Pressupõe que o cluster, o banco e a Lambda do ambiente já foram
+  # provisionados pelos repositórios infra-k8s, infra-db e auth-lambda.
   deploy:
     name: Deploy (EKS)
     runs-on: ubuntu-latest
     needs: build-and-push-image
-    environment: production
+    environment: ${{ github.ref_name == 'homolog' && 'homolog' || 'production' }}
 
     steps:
       - name: Checkout do Código
@@ -197,17 +208,52 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Atualizar kubeconfig do Cluster EKS
-        run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+        run: |
+          EKS_CLUSTER_NAME=$(aws ssm get-parameter --name "$SSM_PREFIX/eks_cluster_name" --query Parameter.Value --output text)
+          aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+          # Disponível para os próximos steps (usado pelo Helm do New Relic)
+          echo "EKS_CLUSTER_NAME=$EKS_CLUSTER_NAME" >> "$GITHUB_ENV"
+
+      - name: Criar Namespace
+        run: kubectl apply -f k8s/namespace.yaml
+
+      # Os valores reais do Secret vêm do SSM do ambiente (publicados pelos
+      # repos infra-db e auth-lambda), não do k8s/secret.yaml versionado, que
+      # só tem placeholders para rodar local (Kind).
+      - name: Criar Secret a partir do SSM
+        env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+        run: |
+          ssm() { aws ssm get-parameter --name "$SSM_PREFIX/$1" --with-decryption --query Parameter.Value --output text; }
+          RDS_ENDPOINT=$(ssm rds_endpoint)
+          RDS_PORT=$(ssm rds_port)
+          RDS_DB_NAME=$(ssm rds_db_name)
+          DB_USER=$(ssm rds_user)
+          DB_PASS=$(ssm rds_password)
+          JWT_SECRET=$(ssm jwt_secret)
+          echo "::add-mask::$DB_USER"
+          echo "::add-mask::$DB_PASS"
+          echo "::add-mask::$JWT_SECRET"
+
+          # RDS exige SSL (rds.force_ssl=1), por isso o sslmode=require explícito.
+          kubectl -n "$K8S_NAMESPACE" create secret generic tech-challenge-secrets             --from-literal=SPRING_DATASOURCE_URL="jdbc:postgresql://$RDS_ENDPOINT:$RDS_PORT/$RDS_DB_NAME?sslmode=require"             --from-literal=DB_USER="$DB_USER"             --from-literal=DB_PASS="$DB_PASS"             --from-literal=JWT_SECRET="$JWT_SECRET"             --from-literal=MAIL_USERNAME="${MAIL_USERNAME:-change-me@example.com}"             --from-literal=MAIL_PASSWORD="${MAIL_PASSWORD:-change-me}"             --dry-run=client -o yaml | kubectl apply -f -
 
       # Observabilidade (ver docs/observability.md). A license key vem de um
       # secret do GitHub e vira um Secret do K8s — nunca é versionada.
-      - name: Criar Secret do New Relic
+      # O ConfigMap separa homolog de produção no New Relic (nome da app + label env).
+      - name: Criar Secret e ConfigMap do New Relic
         env:
           NR_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+          NR_ENV: ${{ github.ref_name == 'homolog' && 'homolog' || 'production' }}
+          NR_APP_NAME: ${{ github.ref_name == 'homolog' && 'tech-challenge-app-homolog' || 'tech-challenge-app' }}
         run: |
-          kubectl create namespace "$K8S_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
           kubectl -n "$K8S_NAMESPACE" create secret generic newrelic-license \
             --from-literal=license_key="$NR_KEY" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n "$K8S_NAMESPACE" create configmap newrelic-config \
+            --from-literal=NEW_RELIC_APP_NAME="$NR_APP_NAME" \
+            --from-literal=NEW_RELIC_LABELS="env:$NR_ENV;team:grupo15" \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       # CPU/memória/eventos do cluster. Idempotente: reinstala sozinho quando o
       # cluster do AWS Academy é recriado. Logs ficam com o agente APM
@@ -227,12 +273,12 @@ jobs:
             --set kubeEvents.enabled=true \
             --set logging.enabled=false
 
-      # TODO (Fase 4/5): buscar SPRING_DATASOURCE_URL, JWT_SECRET e demais segredos
-      # via `aws ssm get-parameter` (publicados pelos repos infra-db/auth-lambda) e
-      # popular k8s/secret.yaml + k8s/configmap.yaml antes do apply, em vez de usar
-      # os placeholders versionados.
       - name: Aplicar Manifests Kubernetes
-        run: kubectl apply -k k8s/
+        run: |
+          # Tira o secret.yaml (placeholders) do apply, para não sobrescrever o
+          # Secret real criado no passo anterior.
+          sed -i '/^  - secret.yaml$/d' k8s/kustomization.yaml
+          kubectl apply -k k8s/
 
       - name: Atualizar Imagem do Deployment
         run: |

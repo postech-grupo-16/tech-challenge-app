@@ -26,11 +26,22 @@ A região da conta (US/EU) é detectada pela própria chave; não há nada a con
 
 ## 2. Deploy
 
-Basta fazer merge na `main`. O job `Deploy (EKS)` do pipeline:
+Basta fazer merge na `homolog` ou na `main`. O job `Deploy (EKS)` do pipeline:
 
-1. cria o Secret `newrelic-license` no namespace `tech-challenge`;
-2. instala/atualiza o `nri-bundle` no namespace `newrelic` (cluster `eks-tech-challenge`);
+1. cria o Secret `newrelic-license` e o ConfigMap `newrelic-config` no namespace `tech-challenge`;
+2. instala/atualiza o `nri-bundle` no namespace `newrelic`, usando o nome do cluster lido do SSM do ambiente;
 3. aplica os manifests: o Deployment liga o agente via `JAVA_TOOL_OPTIONS`.
+
+Cada ambiente aparece separado no New Relic:
+
+| Ambiente | Branch | App no APM | Label | Cluster |
+|---|---|---|---|---|
+| Produção | `main` | `tech-challenge-app` | `env:production` | `eks-tech-challenge` |
+| Homolog | `homolog` | `tech-challenge-app-homolog` | `env:homolog` | valor de `/tech-challenge-homolog/eks_cluster_name` no SSM |
+
+As consultas e os alertas abaixo usam os nomes de **produção**. Para homolog, troque
+`tech-challenge-app` por `tech-challenge-app-homolog` e o `clusterName` pelo cluster de homolog.
+`deploymentName` e `containerName` continuam iguais nos dois ambientes.
 
 Em ~2–5 minutos devem aparecer no New Relic:
 

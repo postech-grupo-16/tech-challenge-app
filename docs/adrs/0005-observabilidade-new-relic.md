@@ -29,6 +29,7 @@ Usar o **New Relic** (plano free) com o menor número de peças possível:
 ## Consequências
 
 - A license key fica só no GitHub Secrets (`NEW_RELIC_LICENSE_KEY`) e num Secret do K8s criado pelo pipeline, nunca versionada. Sem ela, o agente se desativa e a aplicação sobe normalmente (ex.: Kind local).
+- Homolog e produção aparecem separados no New Relic: o pipeline cria o ConfigMap `newrelic-config` com o nome da app (`tech-challenge-app` ou `tech-challenge-app-homolog`) e o label `env`, e o `nri-bundle` usa o nome do cluster lido do SSM de cada ambiente.
 - Logs de produção passam a ser JSON. O profile `dev` mantém texto legível.
 - Erros 4xx não contam como falha no APM (`NEW_RELIC_ERROR_COLLECTOR_IGNORE_STATUS_CODES=400-499`), então os alertas refletem só falhas reais (5xx).
 - Alertas, Service Level e dashboard são configurados na UI do New Relic, não em código. Se o projeto crescer, a evolução natural é versioná-los com o provider Terraform do New Relic.

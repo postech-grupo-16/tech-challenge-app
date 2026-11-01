@@ -41,8 +41,8 @@ spec:
                   key: DB_PASS
             - name: SPRING_DATASOURCE_URL
               valueFrom:
-                configMapKeyRef:
-                  name: tech-challenge-config
+                secretKeyRef:
+                  name: tech-challenge-secrets
                   key: SPRING_DATASOURCE_URL
             - name: JWT_SECRET
               valueFrom:
@@ -70,8 +70,14 @@ spec:
                   name: newrelic-license
                   key: license_key
                   optional: true
+            # Nome da app e ambiente vêm do ConfigMap newrelic-config, criado pelo
+            # pipeline (tech-challenge-app em produção, tech-challenge-app-homolog em homolog)
             - name: NEW_RELIC_APP_NAME
-              value: tech-challenge-app
+              valueFrom:
+                configMapKeyRef:
+                  name: newrelic-config
+                  key: NEW_RELIC_APP_NAME
+                  optional: true
             - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
               value: "true"
             - name: NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED
@@ -83,7 +89,11 @@ spec:
             - name: NEW_RELIC_ERROR_COLLECTOR_IGNORE_STATUS_CODES
               value: "400-499"
             - name: NEW_RELIC_LABELS
-              value: "env:production;team:grupo15"
+              valueFrom:
+                configMapKeyRef:
+                  name: newrelic-config
+                  key: NEW_RELIC_LABELS
+                  optional: true
           readinessProbe:
             httpGet:
               path: /actuator/health
