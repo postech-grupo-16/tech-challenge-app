@@ -27,7 +27,7 @@ funcionando.
 | `app-deployment.yaml` | Deployment | A aplicação Spring Boot (2 réplicas) |
 | `app-service.yaml` | Service | Acesso interno à API (ClusterIP) |
 | `app-ingress.yaml` | Ingress | Exposição HTTP externa (host `tech-challenge.local`) |
-| `app-hpa.yaml` | HorizontalPodAutoscaler | Autoscaling por CPU/memória (2 a 6 réplicas) |
+| `app-hpa.yaml` | HorizontalPodAutoscaler | Autoscaling por CPU (2 a 6 réplicas) |
 | `app-pdb.yaml` | PodDisruptionBudget | Mantém ao menos 1 réplica no ar durante manutenções |
 | `kustomization.yaml` | Kustomization | Amarra todos os recursos acima |
 
