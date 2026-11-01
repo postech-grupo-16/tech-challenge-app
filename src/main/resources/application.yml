@@ -43,6 +43,13 @@ spring:
           writetimeout: 5000
 
 
+logging:
+  structured:
+    format:
+      # Logs em JSON (formato ECS, nativo do Spring Boot 3.4+). Inclui o MDC,
+      # então o requestId do RequestIdFilter aparece em toda linha.
+      console: ecs
+
 app:
   jwt:
     secret: ${JWT_SECRET:uma-chave-local-de-desenvolvimento-com-32-caracteres}

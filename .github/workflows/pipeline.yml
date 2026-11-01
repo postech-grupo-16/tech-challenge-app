@@ -211,6 +211,8 @@ jobs:
         run: |
           EKS_CLUSTER_NAME=$(aws ssm get-parameter --name "$SSM_PREFIX/eks_cluster_name" --query Parameter.Value --output text)
           aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+          # Disponível para os próximos steps (usado pelo Helm do New Relic)
+          echo "EKS_CLUSTER_NAME=$EKS_CLUSTER_NAME" >> "$GITHUB_ENV"
 
       - name: Criar Namespace
         run: kubectl apply -f k8s/namespace.yaml
@@ -236,6 +238,40 @@ jobs:
 
           # RDS exige SSL (rds.force_ssl=1), por isso o sslmode=require explícito.
           kubectl -n "$K8S_NAMESPACE" create secret generic tech-challenge-secrets             --from-literal=SPRING_DATASOURCE_URL="jdbc:postgresql://$RDS_ENDPOINT:$RDS_PORT/$RDS_DB_NAME?sslmode=require"             --from-literal=DB_USER="$DB_USER"             --from-literal=DB_PASS="$DB_PASS"             --from-literal=JWT_SECRET="$JWT_SECRET"             --from-literal=MAIL_USERNAME="${MAIL_USERNAME:-change-me@example.com}"             --from-literal=MAIL_PASSWORD="${MAIL_PASSWORD:-change-me}"             --dry-run=client -o yaml | kubectl apply -f -
+
+      # Observabilidade (ver docs/observability.md). A license key vem de um
+      # secret do GitHub e vira um Secret do K8s — nunca é versionada.
+      # O ConfigMap separa homolog de produção no New Relic (nome da app + label env).
+      - name: Criar Secret e ConfigMap do New Relic
+        env:
+          NR_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+          NR_ENV: ${{ github.ref_name == 'homolog' && 'homolog' || 'production' }}
+          NR_APP_NAME: ${{ github.ref_name == 'homolog' && 'tech-challenge-app-homolog' || 'tech-challenge-app' }}
+        run: |
+          kubectl -n "$K8S_NAMESPACE" create secret generic newrelic-license \
+            --from-literal=license_key="$NR_KEY" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n "$K8S_NAMESPACE" create configmap newrelic-config \
+            --from-literal=NEW_RELIC_APP_NAME="$NR_APP_NAME" \
+            --from-literal=NEW_RELIC_LABELS="env:$NR_ENV;team:grupo15" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      # CPU/memória/eventos do cluster. Idempotente: reinstala sozinho quando o
+      # cluster do AWS Academy é recriado. Logs ficam com o agente APM
+      # (logging.enabled=false evita logs duplicados).
+      - name: Instalar/atualizar New Relic Kubernetes integration
+        env:
+          NR_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+        run: |
+          helm repo add newrelic https://helm-charts.newrelic.com
+          helm repo update
+          helm upgrade --install newrelic-bundle newrelic/nri-bundle \
+            --namespace newrelic --create-namespace \
+            --set global.licenseKey="$NR_KEY" \
+            --set global.cluster="$EKS_CLUSTER_NAME" \
+            --set newrelic-infrastructure.privileged=true \
+            --set kube-state-metrics.enabled=true \
+            --set kubeEvents.enabled=true \
+            --set logging.enabled=false
 
       - name: Aplicar Manifests Kubernetes
         run: |

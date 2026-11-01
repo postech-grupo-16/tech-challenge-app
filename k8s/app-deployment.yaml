@@ -59,6 +59,41 @@ spec:
                 secretKeyRef:
                   name: tech-challenge-secrets
                   key: MAIL_PASSWORD
+            # --- New Relic APM (ver docs/observability.md) ---
+            - name: JAVA_TOOL_OPTIONS
+              value: "-javaagent:/app/newrelic/newrelic.jar"
+            # Secret criado pelo pipeline a partir de secrets.NEW_RELIC_LICENSE_KEY.
+            # optional: sem o Secret (ex.: Kind local) o agente se desativa e a app sobe normal.
+            - name: NEW_RELIC_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: newrelic-license
+                  key: license_key
+                  optional: true
+            # Nome da app e ambiente vêm do ConfigMap newrelic-config, criado pelo
+            # pipeline (tech-challenge-app em produção, tech-challenge-app-homolog em homolog)
+            - name: NEW_RELIC_APP_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: newrelic-config
+                  key: NEW_RELIC_APP_NAME
+                  optional: true
+            - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+              value: "true"
+            - name: NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED
+              value: "true"
+            # Envia o MDC (requestId do RequestIdFilter) junto com cada log
+            - name: NEW_RELIC_APPLICATION_LOGGING_FORWARDING_CONTEXT_DATA_ENABLED
+              value: "true"
+            # 4xx são erros do cliente (validação, não encontrado) — não contam como falha
+            - name: NEW_RELIC_ERROR_COLLECTOR_IGNORE_STATUS_CODES
+              value: "400-499"
+            - name: NEW_RELIC_LABELS
+              valueFrom:
+                configMapKeyRef:
+                  name: newrelic-config
+                  key: NEW_RELIC_LABELS
+                  optional: true
           readinessProbe:
             httpGet:
               path: /actuator/health
