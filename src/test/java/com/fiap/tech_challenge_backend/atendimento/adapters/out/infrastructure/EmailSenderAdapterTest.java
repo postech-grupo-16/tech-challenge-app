@@ -1,5 +1,6 @@
 package com.fiap.tech_challenge_backend.atendimento.adapters.out.infrastructure;
 
+import com.fiap.tech_challenge_backend.atendimento.application.ports.out.MetricasNegocioPort;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,8 +13,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import java.time.Duration;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -22,6 +27,9 @@ class EmailSenderAdapterTest {
 
     @Mock
     private JavaMailSender mailSender;
+
+    @Mock
+    private MetricasNegocioPort metricas;
 
     @InjectMocks
     private EmailSenderAdapter emailSenderAdapter;
@@ -161,5 +169,36 @@ class EmailSenderAdapterTest {
         emailSenderAdapter.enviarEmailComAnexo(email, assunto, corpoHtml, null, null);
 
         verify(mailSender, times(1)).send(mimeMessage);
+    }
+
+    @Test
+    @DisplayName("deve registrar métrica de sucesso com anexo")
+    void deveRegistrarMetricaDeSucessoComAnexo() {
+        when(mailSender.createMimeMessage()).thenReturn(mock(MimeMessage.class));
+
+        emailSenderAdapter.enviarEmailComAnexo(email, assunto, corpoHtml, anexo, nomeAnexo);
+
+        verify(metricas).integracao(eq("email"), eq("com_anexo"), eq(true), any(Duration.class), isNull());
+    }
+
+    @Test
+    @DisplayName("deve registrar métrica de sucesso sem anexo")
+    void deveRegistrarMetricaDeSucessoSemAnexo() {
+        when(mailSender.createMimeMessage()).thenReturn(mock(MimeMessage.class));
+
+        emailSenderAdapter.enviarEmailComAnexo(email, assunto, corpoHtml, null, null);
+
+        verify(metricas).integracao(eq("email"), eq("sem_anexo"), eq(true), any(Duration.class), isNull());
+    }
+
+    @Test
+    @DisplayName("deve registrar métrica de falha só com o nome da exceção")
+    void deveRegistrarMetricaDeFalha() {
+        when(mailSender.createMimeMessage()).thenThrow(new IllegalStateException("cliente@test.com recusado"));
+
+        emailSenderAdapter.enviarEmailComAnexo(email, assunto, corpoHtml, anexo, nomeAnexo);
+
+        verify(metricas).integracao(eq("email"), eq("com_anexo"), eq(false), any(Duration.class),
+                eq("IllegalStateException"));
     }
 }

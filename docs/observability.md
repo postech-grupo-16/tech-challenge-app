@@ -13,6 +13,9 @@ de arquitetura está no [ADR 0005](adrs/0005-observabilidade-new-relic.md).
 | Uptime | Service Level de disponibilidade + alerta de *loss of signal* no APM | UI do New Relic |
 | Falhas em Ordens de Serviço | Alertas NRQL sobre `Transaction` 5xx e `Log` ERROR | UI do New Relic |
 | Logs JSON + correlação | Logging estruturado ECS do Spring Boot + [`RequestIdFilter`](../src/main/java/com/fiap/tech_challenge_backend/shared/infrastructure/web/RequestIdFilter.java); o agente envia os logs com `trace.id`/`span.id` | [`application.yml`](../src/main/resources/application.yml) |
+| Volume diário de OS | Evento customizado `OrdemServicoCriada` | Ver [seção 6](#6-métricas-de-negócio) |
+| Tempo médio por status | Evento customizado `OrdemServicoStatusAlterado` | Ver [seção 6](#6-métricas-de-negócio) |
+| Falhas nas integrações | Evento customizado `Integracao` (e-mail e PDF) + dados do agente (banco) | Ver [seção 6](#6-métricas-de-negócio) |
 
 ## 1. Pré-requisitos (uma vez só)
 
@@ -105,21 +108,73 @@ Os alertas de healthcheck/uptime estão na tabela abaixo.
 | CPU do pod alta | `SELECT average(cpuUsedCores / cpuLimitCores) * 100 FROM K8sContainerSample WHERE clusterName = 'eks-tech-challenge' AND containerName = 'app' FACET podName` | above 80 por 5 min |
 | Memória do pod alta | `SELECT average(memoryWorkingSetBytes / memoryLimitBytes) * 100 FROM K8sContainerSample WHERE clusterName = 'eks-tech-challenge' AND containerName = 'app' FACET podName` | above 80 por 5 min |
 | Pod reiniciando | `SELECT max(restartCountDelta) FROM K8sContainerSample WHERE clusterName = 'eks-tech-challenge' AND containerName = 'app' FACET podName` | above 0 por 1 min |
+| Falha em integração (e-mail/PDF) | `SELECT count(*) FROM Integracao WHERE appName = 'tech-challenge-app' AND sucesso IS false` | above 0 por 5 min |
+| Erro de banco | `SELECT count(*) FROM TransactionError WHERE appName = 'tech-challenge-app' AND (error.class LIKE '%SQL%' OR error.class LIKE '%DataAccess%' OR error.class LIKE '%Jdbc%' OR error.class LIKE '%Hibernate%')` | above 0 por 5 min |
 
 > Erros 4xx (validação, OS não encontrada) são ignorados pelo agente
 > (`NEW_RELIC_ERROR_COLLECTOR_IGNORE_STATUS_CODES=400-499`), então não geram alerta.
 
-## 6. Dashboard (opcional)
+## 6. Métricas de negócio
 
-*Dashboards → Create a dashboard* com widgets das consultas acima, por exemplo:
+O New Relic não tira estes dados das requisições, então a aplicação os envia como **eventos
+customizados**, pela porta `MetricasNegocioPort`. Só o
+[`NewRelicMetricasNegocioAdapter`](../src/main/java/com/fiap/tech_challenge_backend/atendimento/adapters/out/observability/NewRelicMetricasNegocioAdapter.java)
+conhece o New Relic. Sem o agente (local, Kind) a API não faz nada, e uma falha no envio nunca afeta a operação.
 
-- `SELECT percentile(duration, 50, 95, 99) FROM Transaction WHERE appName = 'tech-challenge-app' FACET name TIMESERIES`
-- `SELECT rate(count(*), 1 minute) FROM Transaction WHERE appName = 'tech-challenge-app' TIMESERIES`
-- `SELECT percentage(count(*), WHERE httpResponseCode >= '500') FROM Transaction WHERE appName = 'tech-challenge-app' TIMESERIES`
-- `SELECT average(cpuUsedCores), average(memoryWorkingSetBytes) FROM K8sContainerSample WHERE containerName = 'app' FACET podName TIMESERIES`
-- `SELECT count(*) FROM Log WHERE entity.name = 'tech-challenge-app' FACET level TIMESERIES`
+| Evento | Quando é enviado | Atributos |
+|---|---|---|
+| `OrdemServicoCriada` | OS criada | `osId`, `urgente`, `requestId` |
+| `OrdemServicoStatusAlterado` | OS muda de status (troca só de mecânico não conta) | `osId`, `statusOrigem`, `statusDestino`, `tempoNoStatusSegundos`, `tempoDesdeCriacaoSegundos`, `requestId` |
+| `Integracao` | Cada envio de e-mail e cada geração de PDF | `integracao` (`email`/`pdf`), `operacao` (`com_anexo`/`sem_anexo`/`orcamento`), `sucesso`, `duracaoMs`, `erro`, `requestId` |
 
-## 7. Como testar os alertas
+- **Tempo por status:** `tempoNoStatusSegundos` é o tempo que a OS ficou em `statusOrigem`, medido quando
+  ela sai dele. Diagnóstico é `EM_DIAGNOSTICO`, Execução é `EM_EXECUCAO` e Finalização é `FINALIZADA` (até
+  `ENTREGUE`). O tempo total até finalizar é `tempoDesdeCriacaoSegundos` com `statusDestino = 'FINALIZADA'`.
+- **Onde é capturado:** toda criação e troca de status grava no histórico, então o
+  [`OsHistoricoStatusMetricasDecorator`](../src/main/java/com/fiap/tech_challenge_backend/atendimento/adapters/out/observability/OsHistoricoStatusMetricasDecorator.java)
+  é o único ponto necessário.
+- **Rollback:** eventos de OS só saem depois do commit. Eventos de integração saem na hora, para a falha
+  aparecer mesmo se a transação for desfeita.
+- **Dados pessoais:** nenhum e-mail, CPF ou placa é enviado. O atributo `erro` traz só o nome da classe da
+  exceção, porque a mensagem pode conter o endereço de e-mail.
+- **Banco:** não precisa de evento. O agente já envia `databaseDuration` e `databaseCallCount` em
+  `Transaction`, *spans* com `category = 'datastore'` e as exceções em `TransactionError`.
+
+OS anteriores ao deploy não entram nessas métricas, e a retenção de eventos customizados da conta limita
+quantos dias aparecem.
+
+## 7. Dashboard
+
+O dashboard está versionado em [`newrelic/dashboard.json`](newrelic/dashboard.json). Para criar no New Relic:
+
+1. *Dashboards → Import dashboard*.
+2. Colar o conteúdo do arquivo e escolher a conta → *Import dashboard*.
+
+Um único dashboard serve os dois ambientes: no topo há as variáveis **Aplicação**
+(`tech-challenge-app` ou `tech-challenge-app-homolog`) e **Cluster** (`eks-tech-challenge` ou
+`eks-tech-challenge-homolog`), preenchidas com o que estiver reportando ao New Relic. O padrão é
+homolog, que é onde há dados hoje.
+
+| Página | O que mostra |
+|---|---|
+| Visão geral | Disponibilidade (% sem 5xx), latência p95, req/min, % de 5xx, pods prontos, reinícios, CPU/memória por pod, healthcheck e logs por nível |
+| Negócio | Volume diário de OS, tempo médio em Diagnóstico, Execução e Finalização, tempo total até finalizar, fluxo de status, falhas de e-mail e PDF, tempo e erros do banco |
+| APIs | Tabela por endpoint (volume, média, p95, % 5xx), endpoints mais lentos, erros (`TransactionError`) e requisições acima de 1 s com `traceId` |
+| Ordens de Serviço | Requisições e falhas 5xx em `/api/v1/ordens-servico` e `/api/public/atendimento/ordens`, p95, logs ERROR do atendimento com `requestId` |
+| Kubernetes | Pods disponíveis/desejados, uso dos nós, CPU/memória por pod, réplicas do HPA, estado atual dos pods e eventos do namespace |
+| Logs | Logs por nível, loggers com mais WARN/ERROR e últimos erros com `requestId`/`trace.id` |
+
+As consultas de API ignoram `/actuator/*`: as probes chamam o healthcheck a cada 10–20 s e
+distorceriam latência e volume. O healthcheck tem um gráfico próprio na Visão geral.
+
+As queries fixam o *account ID* `8656379` (conta do grupo no New Relic). Se o dashboard for
+importado em outra conta, troque esse número no JSON antes de importar.
+
+Se o dashboard for alterado na UI, exporte de novo (*... → Copy JSON to clipboard*) e atualize o
+arquivo no repositório. O caminho inverso não é automático: mudar o arquivo não altera o dashboard que
+já está no New Relic. Importe o arquivo novo e apague o antigo na UI.
+
+## 8. Como testar os alertas
 
 1. **Falha de OS:** provocar um 500 num endpoint de `/api/v1/ordens-servico` e conferir o e-mail.
 2. **Healthcheck:** apontar a readinessProbe para um path inexistente:
