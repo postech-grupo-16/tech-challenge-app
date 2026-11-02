@@ -9,6 +9,8 @@ spec:
     name: tech-challenge-app
   minReplicas: 2
   maxReplicas: 6
+  # Só CPU: a JVM reserva heap ao subir e não devolve, então a memória fica
+  # sempre "alta" mesmo sem carga e escalaria réplicas à toa (ver ADR 0002).
   metrics:
     - type: Resource
       resource:
@@ -16,9 +18,3 @@ spec:
         target:
           type: Utilization
           averageUtilization: 70
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: 75

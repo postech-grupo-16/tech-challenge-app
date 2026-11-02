@@ -15,6 +15,10 @@ spring:
           writetimeout: 5000
 
 logging:
+  # Localmente, texto legível em vez de JSON
+  structured:
+    format:
+      console: ""
   level:
     com.fiap.tech_challenge_backend: DEBUG
     org.springframework.mail: DEBUG

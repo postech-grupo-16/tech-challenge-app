@@ -1,5 +1,6 @@
 package com.fiap.tech_challenge_backend.atendimento.adapters.out.infrastructure;
 
+import com.fiap.tech_challenge_backend.atendimento.application.ports.out.MetricasNegocioPort;
 import com.fiap.tech_challenge_backend.atendimento.application.ports.out.PecaInsumoCatalogoRepositoryPort;
 import com.fiap.tech_challenge_backend.atendimento.domain.entities.OsOrcamento;
 import com.fiap.tech_challenge_backend.atendimento.domain.entities.OsPeca;
@@ -21,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +30,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PdfGeneratorAdapter Tests")
@@ -36,6 +42,9 @@ class PdfGeneratorAdapterTest {
 
     @Mock
     private PecaInsumoCatalogoRepositoryPort pecaInsumoRepository;
+
+    @Mock
+    private MetricasNegocioPort metricas;
 
     @InjectMocks
     private PdfGeneratorAdapter pdfGeneratorAdapter;
@@ -303,5 +312,22 @@ class PdfGeneratorAdapterTest {
             assertNotNull(pdf);
             assertTrue(pdf.length > 0);
         }
+    }
+
+    @Test
+    @DisplayName("deve registrar métrica de sucesso ao gerar o PDF")
+    void deveRegistrarMetricaDeSucesso() {
+        pdfGeneratorAdapter.gerarDocumentoTexto(orcamento, veiculo);
+
+        verify(metricas).integracao(eq("pdf"), eq("orcamento"), eq(true), any(Duration.class), isNull());
+    }
+
+    @Test
+    @DisplayName("deve registrar métrica de falha e relançar a exceção")
+    void deveRegistrarMetricaDeFalha() {
+        assertThrows(NullPointerException.class, () -> pdfGeneratorAdapter.gerarDocumentoTexto(null, veiculo));
+
+        verify(metricas).integracao(eq("pdf"), eq("orcamento"), eq(false), any(Duration.class),
+                eq("NullPointerException"));
     }
 }
