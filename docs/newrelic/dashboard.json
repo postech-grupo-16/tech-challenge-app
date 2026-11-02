@@ -1,0 +1,1645 @@
+{
+  "name": "tech-challenge-app",
+  "description": "Latência das APIs, indicadores de negócio, Ordens de Serviço, Kubernetes, healthcheck e logs. Troque o ambiente pelas variáveis Aplicação e Cluster.",
+  "permissions": "PUBLIC_READ_WRITE",
+  "pages": [
+    {
+      "name": "Visão geral",
+      "description": null,
+      "widgets": [
+        {
+          "title": "Disponibilidade (% sem 5xx)",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT percentage(count(*), WHERE httpResponseCode < '500') AS 'Disponibilidade %' FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND request.uri NOT LIKE '/actuator%'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Latência p95 (s)",
+          "layout": {
+            "column": 3,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT percentile(duration, 95) AS 'p95 (s)' FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND request.uri NOT LIKE '/actuator%'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Requisições por minuto",
+          "layout": {
+            "column": 5,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT rate(count(*), 1 minute) AS 'req/min' FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND request.uri NOT LIKE '/actuator%'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Erros 5xx (%)",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT percentage(count(*), WHERE httpResponseCode >= '500') AS 'Erros 5xx %' FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND request.uri NOT LIKE '/actuator%'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Pods disponíveis / desejados",
+          "layout": {
+            "column": 9,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT latest(podsAvailable) AS 'Disponíveis', latest(podsDesired) AS 'Desejados' FROM K8sDeploymentSample WHERE clusterName = {{cluster}} AND deploymentName = 'tech-challenge-app' SINCE 5 minutes ago"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": true
+            }
+          }
+        },
+        {
+          "title": "Reinícios do container",
+          "layout": {
+            "column": 11,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT sum(restartCountDelta) AS 'Reinícios' FROM K8sContainerSample WHERE clusterName = {{cluster}} AND deploymentName = 'tech-challenge-app' AND containerName = 'app'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Latência das APIs (p50 / p95 / p99, em s)",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT percentile(duration, 50, 95, 99) FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND request.uri NOT LIKE '/actuator%' TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Requisições por minuto, por status HTTP",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT rate(count(*), 1 minute) FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND request.uri NOT LIKE '/actuator%' FACET httpResponseCode TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "CPU por pod (% do limite)",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(cpuUsedCores / cpuLimitCores) * 100 FROM K8sContainerSample WHERE clusterName = {{cluster}} AND deploymentName = 'tech-challenge-app' AND containerName = 'app' FACET podName TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Memória por pod (% do limite)",
+          "layout": {
+            "column": 7,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(memoryWorkingSetBytes / memoryLimitBytes) * 100 FROM K8sContainerSample WHERE clusterName = {{cluster}} AND deploymentName = 'tech-challenge-app' AND containerName = 'app' FACET podName TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Healthcheck /actuator/health, por status",
+          "layout": {
+            "column": 1,
+            "row": 10,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) FROM Transaction WHERE appName = {{app}} AND request.uri = '/actuator/health' FACET httpResponseCode TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Logs por nível",
+          "layout": {
+            "column": 7,
+            "row": 10,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) FROM Log WHERE entity.name = {{app}} FACET level TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Negócio",
+      "description": null,
+      "widgets": [
+        {
+          "title": "OS criadas hoje",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) AS 'OS hoje' FROM OrdemServicoCriada WHERE appName = {{app}} SINCE today"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": true
+            }
+          }
+        },
+        {
+          "title": "OS criadas no período",
+          "layout": {
+            "column": 3,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) AS 'OS' FROM OrdemServicoCriada WHERE appName = {{app}}"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Diagnóstico (min)",
+          "layout": {
+            "column": 5,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(tempoNoStatusSegundos) / 60 AS 'Diagnóstico' FROM OrdemServicoStatusAlterado WHERE appName = {{app}} AND statusOrigem = 'EM_DIAGNOSTICO'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Execução (min)",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(tempoNoStatusSegundos) / 60 AS 'Execução' FROM OrdemServicoStatusAlterado WHERE appName = {{app}} AND statusOrigem = 'EM_EXECUCAO'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Finalização: parada em FINALIZADA (min)",
+          "layout": {
+            "column": 9,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(tempoNoStatusSegundos) / 60 AS 'Finalização' FROM OrdemServicoStatusAlterado WHERE appName = {{app}} AND statusOrigem = 'FINALIZADA'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Total até finalizar (h)",
+          "layout": {
+            "column": 11,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(tempoDesdeCriacaoSegundos) / 3600 AS 'Total' FROM OrdemServicoStatusAlterado WHERE appName = {{app}} AND statusDestino = 'FINALIZADA'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Volume diário de OS (30 dias)",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) FROM OrdemServicoCriada WHERE appName = {{app}} SINCE 30 days ago TIMESERIES 1 day"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": true
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Tempo médio em cada status (min)",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(tempoNoStatusSegundos) / 60 FROM OrdemServicoStatusAlterado WHERE appName = {{app}} FACET statusOrigem"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Tempo por status ao longo dos dias (min)",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(tempoNoStatusSegundos) / 60 FROM OrdemServicoStatusAlterado WHERE appName = {{app}} FACET statusOrigem TIMESERIES 1 day"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Fluxo de status",
+          "layout": {
+            "column": 7,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) AS 'Mudanças' FROM OrdemServicoStatusAlterado WHERE appName = {{app}} FACET statusOrigem, statusDestino"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Integrações: chamadas, % de falha, média e p95",
+          "layout": {
+            "column": 1,
+            "row": 10,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) AS 'Chamadas', percentage(count(*), WHERE sucesso IS false) AS '% falha', average(duracaoMs) AS 'Média (ms)', percentile(duracaoMs, 95) AS 'p95 (ms)' FROM Integracao WHERE appName = {{app}} FACET integracao, operacao"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Falhas por integração",
+          "layout": {
+            "column": 7,
+            "row": 10,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT filter(count(*), WHERE sucesso IS false) FROM Integracao WHERE appName = {{app}} FACET integracao TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Últimas falhas de integração",
+          "layout": {
+            "column": 1,
+            "row": 13,
+            "width": 12,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT integracao, operacao, erro, requestId FROM Integracao WHERE appName = {{app}} AND sucesso IS false LIMIT 50"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Banco: tempo (ms) e queries por requisição",
+          "layout": {
+            "column": 1,
+            "row": 16,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(databaseDuration) * 1000 AS 'Tempo no banco (ms)', average(databaseCallCount) AS 'Queries' FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND request.uri NOT LIKE '/actuator%' TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Banco: operações mais lentas (ms)",
+          "layout": {
+            "column": 5,
+            "row": 16,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(duration) * 1000 FROM Span WHERE entity.name = {{app}} AND category = 'datastore' FACET db.collection, db.operation LIMIT 10"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Banco: erros",
+          "layout": {
+            "column": 9,
+            "row": 16,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) FROM TransactionError WHERE appName = {{app}} AND (error.class LIKE '%SQL%' OR error.class LIKE '%DataAccess%' OR error.class LIKE '%Jdbc%' OR error.class LIKE '%Hibernate%') FACET error.class, error.message"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "APIs",
+      "description": null,
+      "widgets": [
+        {
+          "title": "Endpoints (sem /actuator)",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 12,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) AS 'Requisições', average(duration) AS 'Média (s)', percentile(duration, 95) AS 'p95 (s)', percentage(count(*), WHERE httpResponseCode >= '500') AS '% 5xx' FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND request.uri NOT LIKE '/actuator%' FACET name LIMIT 50"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "p95 por endpoint (top 10, em s)",
+          "layout": {
+            "column": 1,
+            "row": 5,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT percentile(duration, 95) FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND request.uri NOT LIKE '/actuator%' FACET name LIMIT 10 TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Endpoints mais lentos (p95, em s)",
+          "layout": {
+            "column": 7,
+            "row": 5,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT percentile(duration, 95) FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND request.uri NOT LIKE '/actuator%' FACET name LIMIT 10"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Erros da aplicação (5xx e exceções)",
+          "layout": {
+            "column": 1,
+            "row": 8,
+            "width": 12,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) FROM TransactionError WHERE appName = {{app}} FACET transactionName, error.class, error.message LIMIT 50"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Requisições acima de 1 s",
+          "layout": {
+            "column": 1,
+            "row": 12,
+            "width": 12,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT name, request.uri, httpResponseCode, duration, traceId FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND request.uri NOT LIKE '/actuator%' AND duration > 1 LIMIT 50"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ordens de Serviço",
+      "description": null,
+      "widgets": [
+        {
+          "title": "Requisições de OS",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) AS 'Requisições' FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND (request.uri LIKE '/api/v1/ordens-servico%' OR request.uri LIKE '/api/public/atendimento/ordens%')"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Falhas 5xx em OS",
+          "layout": {
+            "column": 4,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT filter(count(*), WHERE httpResponseCode >= '500') AS 'Falhas 5xx' FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND (request.uri LIKE '/api/v1/ordens-servico%' OR request.uri LIKE '/api/public/atendimento/ordens%')"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Latência p95 de OS (s)",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT percentile(duration, 95) AS 'p95 (s)' FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND (request.uri LIKE '/api/v1/ordens-servico%' OR request.uri LIKE '/api/public/atendimento/ordens%')"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Erros logados no atendimento",
+          "layout": {
+            "column": 10,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) AS 'Logs ERROR' FROM Log WHERE entity.name = {{app}} AND level = 'ERROR' AND logger.name LIKE '%atendimento%'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Requisições de OS por status HTTP",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND (request.uri LIKE '/api/v1/ordens-servico%' OR request.uri LIKE '/api/public/atendimento/ordens%') FACET httpResponseCode TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Falhas 5xx em OS por endpoint",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND (request.uri LIKE '/api/v1/ordens-servico%' OR request.uri LIKE '/api/public/atendimento/ordens%') AND httpResponseCode >= '500' FACET name TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Endpoints de OS",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 12,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) AS 'Requisições', average(duration) AS 'Média (s)', percentile(duration, 95) AS 'p95 (s)', percentage(count(*), WHERE httpResponseCode >= '500') AS '% 5xx' FROM Transaction WHERE appName = {{app}} AND transactionType = 'Web' AND (request.uri LIKE '/api/v1/ordens-servico%' OR request.uri LIKE '/api/public/atendimento/ordens%') FACET name LIMIT 50"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Logs de erro do atendimento (com requestId e trace)",
+          "layout": {
+            "column": 1,
+            "row": 11,
+            "width": 12,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT message, logger.name, context.requestId, trace.id FROM Log WHERE entity.name = {{app}} AND level = 'ERROR' AND logger.name LIKE '%atendimento%' LIMIT 100"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Kubernetes",
+      "description": null,
+      "widgets": [
+        {
+          "title": "Pods disponíveis / desejados",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT latest(podsAvailable) AS 'Disponíveis', latest(podsDesired) AS 'Desejados' FROM K8sDeploymentSample WHERE clusterName = {{cluster}} AND deploymentName = 'tech-challenge-app' SINCE 5 minutes ago"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": true
+            }
+          }
+        },
+        {
+          "title": "Pods indisponíveis",
+          "layout": {
+            "column": 4,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT latest(podsUnavailable) AS 'Indisponíveis' FROM K8sDeploymentSample WHERE clusterName = {{cluster}} AND deploymentName = 'tech-challenge-app' SINCE 5 minutes ago"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": true
+            }
+          }
+        },
+        {
+          "title": "CPU dos nós (% alocável)",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(allocatableCpuCoresUtilization) AS 'CPU %' FROM K8sNodeSample WHERE clusterName = {{cluster}}"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Memória dos nós (% alocável)",
+          "layout": {
+            "column": 10,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(allocatableMemoryUtilization) AS 'Memória %' FROM K8sNodeSample WHERE clusterName = {{cluster}}"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "CPU usada por pod (cores)",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(cpuUsedCores) FROM K8sContainerSample WHERE clusterName = {{cluster}} AND deploymentName = 'tech-challenge-app' AND containerName = 'app' FACET podName TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Memória usada por pod (MiB)",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(memoryWorkingSetBytes) / 1048576 FROM K8sContainerSample WHERE clusterName = {{cluster}} AND deploymentName = 'tech-challenge-app' AND containerName = 'app' FACET podName TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Réplicas (HPA): desejadas x disponíveis",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT latest(podsDesired) AS 'Desejadas', latest(podsAvailable) AS 'Disponíveis' FROM K8sDeploymentSample WHERE clusterName = {{cluster}} AND deploymentName = 'tech-challenge-app' TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Uso dos nós (% alocável)",
+          "layout": {
+            "column": 7,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT average(allocatableCpuCoresUtilization) AS 'CPU %', average(allocatableMemoryUtilization) AS 'Memória %' FROM K8sNodeSample WHERE clusterName = {{cluster}} FACET nodeName TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Pods da aplicação agora (healthcheck)",
+          "layout": {
+            "column": 1,
+            "row": 10,
+            "width": 12,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT latest(status) AS 'Status', latest(isReady) AS 'Pronto', latest(nodeName) AS 'Nó' FROM K8sPodSample WHERE clusterName = {{cluster}} AND deploymentName = 'tech-challenge-app' FACET podName SINCE 5 minutes ago"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": true
+            }
+          }
+        },
+        {
+          "title": "Eventos do Kubernetes (namespace tech-challenge)",
+          "layout": {
+            "column": 1,
+            "row": 13,
+            "width": 12,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT event.type, event.involvedObject.kind, event.involvedObject.name, event.reason, event.message FROM InfrastructureEvent WHERE category = 'kubernetes' AND clusterName = {{cluster}} AND event.involvedObject.namespace = 'tech-challenge' LIMIT 100"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Logs",
+      "description": null,
+      "widgets": [
+        {
+          "title": "Como seguir uma requisição",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 12,
+            "height": 2
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "Toda resposta da API traz o header **`X-Request-Id`**. Para ver todos os logs daquela requisição, abra **Logs** e filtre por `context.requestId:\"<id>\"`. Também dá para partir de um trace em *APM → Distributed tracing* e abrir a aba **Logs** dele."
+          }
+        },
+        {
+          "title": "Logs por nível",
+          "layout": {
+            "column": 1,
+            "row": 3,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) FROM Log WHERE entity.name = {{app}} FACET level TIMESERIES"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Loggers com mais WARN/ERROR",
+          "layout": {
+            "column": 7,
+            "row": 3,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT count(*) FROM Log WHERE entity.name = {{app}} AND level IN ('WARN', 'ERROR') FACET logger.name LIMIT 10"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            }
+          }
+        },
+        {
+          "title": "Últimos WARN/ERROR",
+          "layout": {
+            "column": 1,
+            "row": 6,
+            "width": 12,
+            "height": 5
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  8656379
+                ],
+                "query": "SELECT level, logger.name, message, context.requestId, trace.id FROM Log WHERE entity.name = {{app}} AND level IN ('WARN', 'ERROR') LIMIT 100"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "name": "app",
+      "title": "Aplicação",
+      "type": "NRQL",
+      "nrqlQuery": {
+        "accountIds": [
+          8656379
+        ],
+        "query": "SELECT uniques(appName) FROM Transaction WHERE appName LIKE 'tech-challenge-app%' SINCE 1 week ago"
+      },
+      "defaultValues": [
+        {
+          "value": {
+            "string": "tech-challenge-app-homolog"
+          }
+        }
+      ],
+      "isMultiSelection": false,
+      "replacementStrategy": "STRING",
+      "items": null,
+      "options": {
+        "ignoreTimeRange": true
+      }
+    },
+    {
+      "name": "cluster",
+      "title": "Cluster",
+      "type": "NRQL",
+      "nrqlQuery": {
+        "accountIds": [
+          8656379
+        ],
+        "query": "SELECT uniques(clusterName) FROM K8sClusterSample SINCE 1 week ago"
+      },
+      "defaultValues": [
+        {
+          "value": {
+            "string": "eks-tech-challenge-homolog"
+          }
+        }
+      ],
+      "isMultiSelection": false,
+      "replacementStrategy": "STRING",
+      "items": null,
+      "options": {
+        "ignoreTimeRange": true
+      }
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 package com.fiap.tech_challenge_backend.atendimento.adapters.out.infrastructure;
 
+import com.fiap.tech_challenge_backend.atendimento.application.ports.out.MetricasNegocioPort;
 import com.fiap.tech_challenge_backend.atendimento.application.ports.out.PdfGeneratorPort;
 import com.fiap.tech_challenge_backend.atendimento.application.ports.out.PecaInsumoCatalogoRepositoryPort;
 import com.fiap.tech_challenge_backend.atendimento.domain.entities.OsOrcamento;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 
 @Component
@@ -47,12 +49,16 @@ public class PdfGeneratorAdapter implements PdfGeneratorPort {
 
     private final PecaInsumoCatalogoRepositoryPort pecaInsumoRepository;
 
-    public PdfGeneratorAdapter(PecaInsumoCatalogoRepositoryPort pecaInsumoRepository) {
+    private final MetricasNegocioPort metricas;
+
+    public PdfGeneratorAdapter(PecaInsumoCatalogoRepositoryPort pecaInsumoRepository, MetricasNegocioPort metricas) {
         this.pecaInsumoRepository = pecaInsumoRepository;
+        this.metricas = metricas;
     }
 
     @Override
     public byte[] gerarDocumentoTexto(OsOrcamento orcamento, Veiculo veiculo) {
+        long inicio = System.nanoTime();
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(outputStream);
             PdfDocument pdfDoc = new PdfDocument(writer);
@@ -83,10 +89,21 @@ public class PdfGeneratorAdapter implements PdfGeneratorPort {
             adicionarRodape(doc, fontSmall, fontBold);
 
             doc.close();
-            return outputStream.toByteArray();
+            byte[] pdf = outputStream.toByteArray();
+            registrarMetrica(inicio, null);
+            return pdf;
         } catch (IOException e) {
+            registrarMetrica(inicio, e);
             throw new RuntimeException("Erro ao gerar PDF de orçamento", e);
+        } catch (RuntimeException e) {
+            registrarMetrica(inicio, e);
+            throw e;
         }
+    }
+
+    private void registrarMetrica(long inicio, Exception erro) {
+        metricas.integracao("pdf", "orcamento", erro == null, Duration.ofNanos(System.nanoTime() - inicio),
+                erro != null ? erro.getClass().getSimpleName() : null);
     }
 
     private void adicionarCabecalho(Document doc, PdfFont fontBold, PdfFont fontRegular) {

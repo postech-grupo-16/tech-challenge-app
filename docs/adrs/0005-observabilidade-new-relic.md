@@ -16,12 +16,13 @@ Usar o **New Relic** (plano free) com o menor número de peças possível:
 - **Logs JSON** com o *structured logging* nativo do Spring Boot 3.4+ (formato ECS) e um [`RequestIdFilter`](../../src/main/java/com/fiap/tech_challenge_backend/shared/infrastructure/web/RequestIdFilter.java) que põe um `requestId` no MDC e o devolve no header `X-Request-Id`.
 - **Healthcheck/uptime** pelas probes já existentes (via `nri-bundle`), mais Service Level e alerta de *loss of signal* no APM. Sem monitor sintético externo, porque o DNS do Load Balancer muda a cada recriação do cluster no AWS Academy.
 - **Alertas** como condições NRQL na UI (ver [`docs/observability.md`](../observability.md)).
+- **Métricas de negócio** (volume diário de OS, tempo por status, falhas de e-mail e PDF) como eventos customizados, pela dependência `newrelic-api`. A porta `MetricasNegocioPort` isola o New Relic em um adapter, e um decorator sobre o histórico de status captura criações e trocas de status sem alterar os serviços.
 
 ## Alternativas consideradas
 
 | Opção | Prós | Contras |
 |---|---|---|
-| **Agente APM + `nri-bundle`** (escolhida) | Nenhuma dependência nova no `pom.xml`; logs correlacionados ao trace sem código; um único `helm` para o cluster | Agente proprietário (lock-in no New Relic); +~60 MB de memória por pod |
+| **Agente APM + `nri-bundle`** (escolhida) | Só a `newrelic-api` como dependência nova no `pom.xml`, usada nas métricas de negócio; logs correlacionados ao trace sem código; um único `helm` para o cluster | Agente proprietário (lock-in no New Relic); +~60 MB de memória por pod |
 | OpenTelemetry (SDK/agent OTel + Collector) enviando ao New Relic via OTLP | Padrão aberto, troca de backend sem mexer na app | Mais peças para operar (Collector, configuração de pipelines); correlação de logs exige configuração extra |
 | Prometheus + Grafana + Loki self-hosted | Sem custo de SaaS | Vários componentes para instalar e manter no cluster, e o cluster do Academy é efêmero (perderia o histórico) |
 | Monitor sintético (Ping) no `/actuator/health` | Testa o caminho externo completo (ELB → app) | Exige URL pública estável; o DNS do ELB muda a cada recriação do cluster |
@@ -31,5 +32,6 @@ Usar o **New Relic** (plano free) com o menor número de peças possível:
 - A license key fica só no GitHub Secrets (`NEW_RELIC_LICENSE_KEY`) e num Secret do K8s criado pelo pipeline, nunca versionada. Sem ela, o agente se desativa e a aplicação sobe normalmente (ex.: Kind local).
 - Homolog e produção aparecem separados no New Relic: o pipeline cria o ConfigMap `newrelic-config` com o nome da app (`tech-challenge-app` ou `tech-challenge-app-homolog`) e o label `env`, e o `nri-bundle` usa o nome do cluster lido do SSM de cada ambiente.
 - Logs de produção passam a ser JSON. O profile `dev` mantém texto legível.
+- As métricas de negócio só contam a partir do deploy, porque OS antigas não geram eventos. Sem o agente, a `newrelic-api` não faz nada, e uma falha no envio não afeta a operação.
 - Erros 4xx não contam como falha no APM (`NEW_RELIC_ERROR_COLLECTOR_IGNORE_STATUS_CODES=400-499`), então os alertas refletem só falhas reais (5xx).
-- Alertas, Service Level e dashboard são configurados na UI do New Relic, não em código. Se o projeto crescer, a evolução natural é versioná-los com o provider Terraform do New Relic.
+- Alertas e Service Level são configurados na UI do New Relic, não em código. O dashboard fica versionado como JSON de importação ([`docs/newrelic/dashboard.json`](../newrelic/dashboard.json)). Se o projeto crescer, a evolução natural é versionar tudo com o provider Terraform do New Relic.

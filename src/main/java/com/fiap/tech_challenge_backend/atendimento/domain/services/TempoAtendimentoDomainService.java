@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Serviço de domínio para cálculos de tempo de atendimento baseados no histórico de status.
@@ -62,6 +63,28 @@ public final class TempoAtendimentoDomainService {
         }
 
         return formatarMapa(tempos, emAndamento);
+    }
+
+    /**
+     * Quanto tempo a OS está no status atual. Entradas com origem e destino iguais (só troca de
+     * mecânico) não contam como entrada no status. Retorna {@code null} se não houver data de início.
+     */
+    public static Duration tempoNoStatusAtual(OrdemServico ordemServico,
+                                              List<OsHistoricoStatus> historico,
+                                              LocalDateTime agora) {
+        LocalDateTime inicio = historico.stream()
+                .filter(evento -> evento.getStatusOrigem() != evento.getStatusDestino())
+                .map(OsHistoricoStatus::getDataMudanca)
+                .filter(Objects::nonNull)
+                .max(Comparator.naturalOrder())
+                .orElse(ordemServico.getDataCriacao());
+
+        if (inicio == null) {
+            return null;
+        }
+
+        Duration duracao = Duration.between(inicio, agora);
+        return duracao.isNegative() ? Duration.ZERO : duracao;
     }
 
     private static void acumular(Map<StatusOrdemServico, Duration> tempos,
